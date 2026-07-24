@@ -202,6 +202,30 @@ export class ClawGame {
     this.notify()
   }
 
+  /** Test helper: fair-win the nearest/first prize into the bag immediately. */
+  forceFairWin(): BagPrize | null {
+    if (this.phase === 'attract' || this.phase === 'ready' || this.phase === 'result') {
+      if (this.coins < PLAY_COST) this.coins = START_COINS
+      this.tryStartRound()
+    }
+
+    const target = this.prizes.find((p) => !p.grabbed)
+    if (!target) return null
+
+    this.claw.x = target.x
+    this.claw.cableY = target.y - target.radius
+    this.claw.open = 0.1
+    this.held = null
+    this.winPrize(target)
+    this.prizes = this.prizes.filter((p) => p.id !== target.id)
+    this.phase = 'result'
+    this.claw.cableY = CABINET.clawRestY
+    this.claw.open = 1
+    this.persist()
+    this.notify()
+    return this.bag[0] ?? null
+  }
+
   onKeyDown = (e: KeyboardEvent) => {
     const key = e.key.toLowerCase()
     if (['arrowleft', 'arrowright', 'a', 'd', ' ', 'enter'].includes(key) || e.code === 'Space') {
