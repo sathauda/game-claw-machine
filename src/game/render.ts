@@ -194,9 +194,248 @@ export function drawPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     case 'crown':
       drawCrown(ctx, p)
       break
+    case 'neonStick':
+    case 'neonCat':
+    case 'neonSkate':
+    case 'neonPhone':
+    case 'neonWolf':
+    case 'neonPulse':
+    case 'neonBlade':
+    case 'neonFox':
+    case 'neonOG':
+      drawNeonPrize(ctx, p, time)
+      break
   }
 
   ctx.restore()
+}
+
+function withAlpha(hex: string, alpha: number) {
+  if (hex.startsWith('#') && hex.length === 7) {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
+  return `rgba(126, 224, 240, ${alpha})`
+}
+
+function neonGlow(ctx: CanvasRenderingContext2D, color: string, time: number, wobble: number, radius: number) {
+  const pulse = 0.35 + Math.sin(time * 7 + wobble) * 0.2
+  ctx.beginPath()
+  ctx.fillStyle = withAlpha(color, pulse)
+  ctx.arc(0, 0, radius * 1.35, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawNeonPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  neonGlow(ctx, p.color, time, p.wobble, p.radius)
+  switch (p.kind) {
+    case 'neonStick':
+      drawNeonStick(ctx, p)
+      break
+    case 'neonCat':
+      drawNeonCat(ctx, p)
+      break
+    case 'neonSkate':
+      drawNeonSkate(ctx, p)
+      break
+    case 'neonPhone':
+      drawNeonPhone(ctx, p)
+      break
+    case 'neonWolf':
+      drawNeonWolf(ctx, p)
+      break
+    case 'neonPulse':
+      drawNeonPulse(ctx, p, time)
+      break
+    case 'neonBlade':
+      drawNeonBlade(ctx, p)
+      break
+    case 'neonFox':
+      drawNeonFox(ctx, p)
+      break
+    case 'neonOG':
+      drawNeonOG(ctx, p, time)
+      break
+  }
+}
+
+function drawNeonStick(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.18, -r * 0.9, r * 0.36, r * 1.8, 8)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  roundRect(ctx, -r * 0.12, -r * 0.75, r * 0.24, r * 1.2, 6)
+  ctx.fill()
+}
+
+function drawNeonCat(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.arc(0, 2, r * 0.7, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.5, -r * 0.15)
+  ctx.lineTo(-r * 0.7, -r * 0.75)
+  ctx.lineTo(-r * 0.15, -r * 0.4)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.moveTo(r * 0.5, -r * 0.15)
+  ctx.lineTo(r * 0.7, -r * 0.75)
+  ctx.lineTo(r * 0.15, -r * 0.4)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.arc(-6, 0, 2.4, 0, Math.PI * 2)
+  ctx.arc(6, 0, 2.4, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.strokeStyle = p.accent
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.9, 4)
+  ctx.lineTo(-r * 0.55, 4)
+  ctx.moveTo(r * 0.55, 4)
+  ctx.lineTo(r * 0.9, 4)
+  ctx.stroke()
+}
+
+function drawNeonSkate(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.95, -r * 0.1, r * 1.9, r * 0.4, 10)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  roundRect(ctx, -r * 0.7, -r * 0.45, r * 0.9, r * 0.35, 6)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.arc(-r * 0.45, r * 0.4, 5, 0, Math.PI * 2)
+  ctx.arc(r * 0.45, r * 0.4, 5, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawNeonPhone(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.55, -r * 0.95, r * 1.1, r * 1.9, 8)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  roundRect(ctx, -r * 0.4, -r * 0.75, r * 0.8, r * 1.35, 4)
+  ctx.fill()
+  ctx.fillStyle = withAlpha(p.accent, 0.45)
+  roundRect(ctx, -r * 0.28, -r * 0.2, r * 0.56, r * 0.12, 2)
+  ctx.fill()
+}
+
+function drawNeonWolf(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.moveTo(0, r * 0.75)
+  ctx.lineTo(-r * 0.75, -r * 0.15)
+  ctx.lineTo(-r * 0.35, -r * 0.85)
+  ctx.lineTo(0, -r * 0.45)
+  ctx.lineTo(r * 0.35, -r * 0.85)
+  ctx.lineTo(r * 0.75, -r * 0.15)
+  ctx.closePath()
+  ctx.fill()
+  ctx.strokeStyle = p.accent
+  ctx.lineWidth = 2.5
+  ctx.stroke()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.arc(-8, -4, 3, 0, Math.PI * 2)
+  ctx.arc(8, -4, 3, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawNeonPulse(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  const r = p.radius
+  const ring = 0.55 + Math.sin(time * 8 + p.wobble) * 0.15
+  ctx.strokeStyle = withAlpha(p.accent, 0.7)
+  ctx.lineWidth = 3
+  ctx.beginPath()
+  ctx.arc(0, 0, r * (0.9 + ring * 0.25), 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.7, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.28, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawNeonBlade(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.accent
+  roundRect(ctx, -r * 0.18, r * 0.15, r * 0.36, r * 0.7, 4)
+  ctx.fill()
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.95)
+  ctx.lineTo(r * 0.28, r * 0.2)
+  ctx.lineTo(-r * 0.28, r * 0.2)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = withAlpha('#FFFFFF', 0.45)
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.75)
+  ctx.lineTo(r * 0.08, r * 0.05)
+  ctx.lineTo(-r * 0.02, r * 0.05)
+  ctx.closePath()
+  ctx.fill()
+}
+
+function drawNeonFox(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.arc(0, 4, r * 0.68, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.45, -r * 0.1)
+  ctx.lineTo(-r * 0.65, -r * 0.85)
+  ctx.lineTo(-r * 0.1, -r * 0.35)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.moveTo(r * 0.45, -r * 0.1)
+  ctx.lineTo(r * 0.65, -r * 0.85)
+  ctx.lineTo(r * 0.1, -r * 0.35)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.moveTo(0, 2)
+  ctx.lineTo(-7, 12)
+  ctx.lineTo(7, 12)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.arc(-6, -2, 2.2, 0, Math.PI * 2)
+  ctx.arc(6, -2, 2.2, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawNeonOG(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  const r = p.radius
+  const spin = time * 2 + p.wobble
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.85, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.strokeStyle = p.accent
+  ctx.lineWidth = 3
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.55, spin, spin + Math.PI * 1.4)
+  ctx.stroke()
+  ctx.fillStyle = p.accent
+  ctx.font = `bold ${Math.floor(r * 0.55)}px Nunito, system-ui`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('OG', 0, 1)
+  ctx.textBaseline = 'alphabetic'
 }
 
 function drawCat(ctx: CanvasRenderingContext2D, p: Prize) {
@@ -965,6 +1204,15 @@ export function prizeIcon(kind: PrizeKind): string {
     trophy: 'CUP',
     rocket: 'ROCKET',
     crown: 'CROWN',
+    neonStick: 'VOLT',
+    neonCat: 'N-CAT',
+    neonSkate: 'SKATE',
+    neonPhone: 'CYBER',
+    neonWolf: 'WOLF',
+    neonPulse: 'PULSE',
+    neonBlade: 'BLADE',
+    neonFox: 'FOX',
+    neonOG: 'OG',
   }
   return map[kind]
 }

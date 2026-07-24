@@ -16,10 +16,12 @@ const FAIR_CLAW_BASE = {
 let nextId = 1
 
 const WEIGHTS: Record<Rarity, number> = {
-  common: 38,
-  rare: 28,
-  epic: 20,
+  common: 40,
+  rare: 26,
+  epic: 16,
   legend: 10,
+  mythic: 5,
+  og: 2,
 }
 
 function pickDef(pool: PrizeKind[]): PrizeDef {
@@ -154,6 +156,66 @@ export function probeGrab(
 export function openPrizeReward(kind: PrizeKind, rarity: Rarity, label: string): OpenReward {
   const roll = Math.random()
 
+  const neonKinds = new Set<PrizeKind>([
+    'neonStick',
+    'neonCat',
+    'neonSkate',
+    'neonPhone',
+    'neonWolf',
+    'neonPulse',
+    'neonBlade',
+    'neonFox',
+    'neonOG',
+  ])
+
+  if (kind === 'neonOG' || rarity === 'og') {
+    return {
+      title: 'OG NEON DROP!',
+      detail: `${label} — original night-market core unlocked`,
+      coins: 22 + Math.floor(Math.random() * 14),
+      score: 60 + Math.floor(Math.random() * 30),
+      sticker: 'OG Neon Seal',
+    }
+  }
+
+  if (kind === 'neonBlade' || kind === 'neonFox' || rarity === 'mythic') {
+    return {
+      title: 'MYTHIC NEON!',
+      detail: `${label} flooded the cabinet with volt credits`,
+      coins: 14 + Math.floor(Math.random() * 10),
+      score: 40 + Math.floor(Math.random() * 20),
+      sticker: kind === 'neonFox' ? 'Mythic Fox Tag' : 'Arc Blade Patch',
+    }
+  }
+
+  if (neonKinds.has(kind)) {
+    if (rarity === 'legend') {
+      return {
+        title: 'Neon pulse!',
+        detail: `${label} lit up the prize chute`,
+        coins: 10 + Math.floor(Math.random() * 6),
+        score: 24 + Math.floor(Math.random() * 14),
+        sticker: 'Pulse Orb Pin',
+      }
+    }
+    if (rarity === 'epic') {
+      return {
+        title: 'Volt score!',
+        detail: `${label} paid neon credits`,
+        coins: 7 + Math.floor(Math.random() * 5),
+        score: 16 + Math.floor(Math.random() * 10),
+        sticker: kind === 'neonPhone' ? 'Cyber Flip Badge' : 'Volt Wolf Pin',
+      }
+    }
+    return {
+      title: 'Glow open!',
+      detail: `${label} spilled electric coins`,
+      coins: 4 + Math.floor(Math.random() * 4),
+      score: 8 + Math.floor(Math.random() * 8),
+      sticker: kind === 'neonCat' ? 'Neon Kitty Pin' : kind === 'neonSkate' ? 'Glow Skate Tag' : 'Volt Stick',
+    }
+  }
+
   const legendTech = new Set<PrizeKind>(['phone', 'tablet', 'laptop', 'jackpot', 'gem', 'trophy', 'rocket', 'crown'])
   if (legendTech.has(kind)) {
     const coins = 10 + Math.floor(Math.random() * 10)
@@ -262,6 +324,10 @@ export function openPrizeReward(kind: PrizeKind, rarity: Rarity, label: string):
 
 export function rarityLabel(rarity: Rarity): string {
   switch (rarity) {
+    case 'og':
+      return 'OG'
+    case 'mythic':
+      return 'MYTHIC'
     case 'legend':
       return 'LEGEND'
     case 'epic':

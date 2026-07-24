@@ -419,6 +419,10 @@ button.capsule:hover { filter: brightness(1.05); transform: translateY(-1px); }
 }
 
 .rarity-legend { box-shadow: 0 0 0 2px rgba(255, 210, 100, 0.55); }
+.rarity-mythic { box-shadow: 0 0 0 2px rgba(126, 240, 200, 0.7); }
+.rarity-og {
+  box-shadow: 0 0 0 2px rgba(184, 255, 74, 0.85), 0 0 16px rgba(126, 224, 240, 0.35);
+}
 
 .sticker-row {
   display: flex;

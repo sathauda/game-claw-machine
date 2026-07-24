@@ -38,8 +38,17 @@ export type PrizeKind =
   | 'trophy'
   | 'rocket'
   | 'crown'
+  | 'neonStick'
+  | 'neonCat'
+  | 'neonSkate'
+  | 'neonPhone'
+  | 'neonWolf'
+  | 'neonPulse'
+  | 'neonBlade'
+  | 'neonFox'
+  | 'neonOG'
 
-export type Rarity = 'common' | 'rare' | 'epic' | 'legend'
+export type Rarity = 'common' | 'rare' | 'epic' | 'legend' | 'mythic' | 'og'
 
 export type Difficulty = 'easy' | 'normal' | 'hard' | 'expert' | 'legend' | 'mythic' | 'nightmare' | 'apex'
 
@@ -183,6 +192,16 @@ export const PRIZE_DEFS: PrizeDef[] = [
   { kind: 'rocket', label: 'Mini Rocket', value: 26, rarity: 'legend', color: '#E85D4C', accent: '#F7E8C8', radius: 23, capsule: '#F07167' },
   { kind: 'crown', label: 'Arcade Crown', value: 28, rarity: 'legend', color: '#FFE29A', accent: '#E8A030', radius: 22, capsule: '#FFD27A' },
   { kind: 'jackpot', label: 'Gold Brick', value: 30, rarity: 'legend', color: '#FFE29A', accent: '#FF8A3D', radius: 18, capsule: '#FFB347' },
+  // Neon Night exclusives
+  { kind: 'neonStick', label: 'Volt Stick', value: 8, rarity: 'common', color: '#7EF0C8', accent: '#1AD4A0', radius: 20, capsule: '#5FE0B8' },
+  { kind: 'neonCat', label: 'Neon Kitty', value: 12, rarity: 'rare', color: '#7EE0F0', accent: '#FF6B9A', radius: 23, capsule: '#5FD0E0' },
+  { kind: 'neonSkate', label: 'Glow Skates', value: 14, rarity: 'rare', color: '#B8FF4A', accent: '#7EE0F0', radius: 22, capsule: '#9AE83A' },
+  { kind: 'neonPhone', label: 'Cyber Flip', value: 18, rarity: 'epic', color: '#0A1A22', accent: '#7EF0C8', radius: 17, capsule: '#1A3A44' },
+  { kind: 'neonWolf', label: 'Volt Wolf', value: 20, rarity: 'epic', color: '#1A2A3A', accent: '#7EE0F0', radius: 24, capsule: '#2A4050' },
+  { kind: 'neonPulse', label: 'Pulse Orb', value: 26, rarity: 'legend', color: '#7EE0F0', accent: '#FF6B9A', radius: 19, capsule: '#5FD0E0' },
+  { kind: 'neonBlade', label: 'Arc Blade', value: 34, rarity: 'mythic', color: '#7EF0C8', accent: '#F4C15D', radius: 21, capsule: '#5FE0B8' },
+  { kind: 'neonFox', label: 'Mythic Fox', value: 38, rarity: 'mythic', color: '#FF8A5A', accent: '#7EE0F0', radius: 23, capsule: '#F07040' },
+  { kind: 'neonOG', label: 'OG Neon Core', value: 55, rarity: 'og', color: '#7EE0F0', accent: '#B8FF4A', radius: 20, capsule: '#4FC4D8' },
 ]
 
 export const MACHINES: MachineDef[] = [
@@ -381,7 +400,7 @@ export const MACHINES: MachineDef[] = [
     level: 11,
     name: 'Neon Night',
     short: 'L11 NEON',
-    blurb: 'Glow phones under wild sway',
+    blurb: 'Neon exclusives · mythic & OG drops',
     cost: 28,
     unlockWins: 42,
     difficulty: 'mythic',
@@ -393,7 +412,17 @@ export const MACHINES: MachineDef[] = [
     body: ['#0E3D4A', '#0A2C36', '#061C24'],
     glass: ['#7EE0F0', '#4FC4D8', '#2AA0B8'],
     marquee: '#0E3D4A',
-    prizeKinds: ['phone', 'headphones', 'watch', 'tablet', 'laptop', 'drone', 'console'],
+    prizeKinds: [
+      'neonStick',
+      'neonCat',
+      'neonSkate',
+      'neonPhone',
+      'neonWolf',
+      'neonPulse',
+      'neonBlade',
+      'neonFox',
+      'neonOG',
+    ],
   },
   {
     id: 'storm',
