@@ -2,7 +2,7 @@ import './style.css'
 import { ClawGame } from './game/Game'
 import { rarityLabel } from './game/prizes'
 import { prizeIcon } from './game/render'
-import type { BagPrize, MachineDef, OpenReward } from './game/types'
+import type { BagPrize, MachineDef, MachineId, OpenReward } from './game/types'
 
 declare global {
   interface Window {
@@ -43,7 +43,7 @@ app.innerHTML = `
           <button type="button" class="btn btn-ghost" id="btn-right" aria-label="Move claw right">→</button>
           <button type="button" class="btn btn-play" id="btn-play">INSERT COIN</button>
         </div>
-        <p class="hint">1-4 switch machines · ← → aim · Space drop · claw sways on harder cabinets</p>
+        <p class="hint">1-0 pick level · [ ] cycle · ← → aim · Space drop · win prizes to unlock higher levels</p>
       </div>
     </main>
 
@@ -131,19 +131,30 @@ function hideOpenModal() {
   modal.classList.add('hidden')
 }
 
-function renderMachines(machines: MachineDef[], activeId: string, canSwitch: boolean, coins: number) {
+function renderMachines(
+  machines: MachineDef[],
+  activeId: string,
+  canSwitch: boolean,
+  coins: number,
+  unlockedIds: string[],
+  wins: number,
+) {
   machineRail.innerHTML = machines
     .map((m) => {
-      const locked = coins < m.cost && activeId !== m.id
+      const unlocked = unlockedIds.includes(m.id)
+      const locked = !unlocked
+      const pricey = unlocked && coins < m.cost && activeId !== m.id
+      const need = Math.max(0, m.unlockWins - wins)
       return `
         <button type="button"
-          class="machine-chip ${m.id === activeId ? 'active' : ''} ${locked ? 'pricey' : ''}"
+          class="machine-chip ${m.id === activeId ? 'active' : ''} ${locked ? 'locked' : ''} ${pricey ? 'pricey' : ''}"
           data-machine="${m.id}"
-          ${!canSwitch ? 'disabled' : ''}
+          ${!canSwitch || locked ? 'disabled' : ''}
+          title="${locked ? `Win ${need} more prizes to unlock` : m.blurb}"
           style="--chip:${m.body[0]}">
           <span class="chip-name">${m.short}</span>
-          <span class="chip-cost">${m.cost}c</span>
-          <span class="chip-diff">${m.difficulty}</span>
+          <span class="chip-cost">${locked ? `NEED ${need}` : `${m.cost}c`}</span>
+          <span class="chip-diff">${locked ? 'locked' : m.difficulty}</span>
         </button>
       `
     })
@@ -213,8 +224,17 @@ function syncUi() {
   statScore.textContent = String(state.score)
   statBest.textContent = String(state.highScore)
   statSealed.textContent = String(state.sealedCount)
-  machineBlurb.textContent = `${state.machine.name} — ${state.machine.blurb}`
-  renderMachines(state.machines, state.machineId, state.canSwitchMachine, state.coins)
+  machineBlurb.textContent = state.nextUnlock
+    ? `${state.machine.name} (Lvl ${state.machine.level}) — ${state.machine.blurb} · Next unlock in ${state.nextUnlock.need} wins`
+    : `${state.machine.name} (Lvl ${state.machine.level}) — ${state.machine.blurb} · All levels unlocked`
+  renderMachines(
+    state.machines,
+    state.machineId,
+    state.canSwitchMachine,
+    state.coins,
+    state.unlockedIds,
+    state.wins,
+  )
   renderBag(state.bag, state.stickers, state.sealedCount)
 }
 
@@ -237,7 +257,7 @@ modal.addEventListener('click', (e) => {
 machineRail.addEventListener('click', (e) => {
   const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-machine]')
   if (!btn?.dataset.machine) return
-  game.setMachine(btn.dataset.machine as 'toybox' | 'plush' | 'gadget' | 'vip')
+  game.setMachine(btn.dataset.machine as MachineId)
 })
 
 bagToggle.addEventListener('click', () => bagDrawer.classList.add('open'))

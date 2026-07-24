@@ -22,8 +22,8 @@ import {
   type Prize,
 } from './types'
 
-const SAVE_KEY = 'lucky-claw-save-v3'
-const START_COINS = 40
+const SAVE_KEY = 'lucky-claw-save-v4'
+const START_COINS = 50
 
 interface SaveData {
   coins: number
@@ -37,18 +37,20 @@ interface SaveData {
 
 function loadSave(): SaveData {
   try {
-    const raw = localStorage.getItem(SAVE_KEY)
+    const raw = localStorage.getItem(SAVE_KEY) || localStorage.getItem('lucky-claw-save-v3')
     if (!raw) return defaultSave()
     const data = JSON.parse(raw) as SaveData
     const machineId = MACHINES.some((m) => m.id === data.machineId) ? data.machineId : 'toybox'
+    const wins = Number(data.wins) || 0
+    const unlocked = getMachine(machineId).unlockWins <= wins ? machineId : 'toybox'
     return {
       coins: Number(data.coins) || START_COINS,
       score: Number(data.score) || 0,
       highScore: Number(data.highScore) || 0,
       bag: Array.isArray(data.bag) ? data.bag : [],
       stickers: Array.isArray(data.stickers) ? data.stickers : [],
-      wins: Number(data.wins) || 0,
-      machineId,
+      wins,
+      machineId: unlocked,
     }
   } catch {
     return defaultSave()
@@ -129,6 +131,8 @@ export class ClawGame {
   getState() {
     const sealedCount = this.bag.filter((p) => p.sealed).length
     const cost = this.machine.cost
+    const unlockedIds = MACHINES.filter((m) => this.wins >= m.unlockWins).map((m) => m.id)
+    const nextLock = MACHINES.find((m) => this.wins < m.unlockWins)
     return {
       phase: this.phase,
       coins: this.coins,
@@ -144,6 +148,10 @@ export class ClawGame {
       machineId: this.machine.id,
       machine: this.machine,
       machines: MACHINES,
+      unlockedIds,
+      nextUnlock: nextLock
+        ? { level: nextLock.level, name: nextLock.name, need: nextLock.unlockWins - this.wins }
+        : null,
       cost,
       canPlay:
         this.coins >= cost &&
@@ -154,9 +162,20 @@ export class ClawGame {
     }
   }
 
+  isUnlocked(id: MachineId) {
+    const machine = getMachine(id)
+    return this.wins >= machine.unlockWins
+  }
+
   setMachine(id: MachineId) {
     if (!(this.phase === 'attract' || this.phase === 'ready' || this.phase === 'result')) return
     if (this.machine.id === id) return
+    if (!this.isUnlocked(id)) {
+      const m = getMachine(id)
+      this.message = `Lvl ${m.level} locked — win ${m.unlockWins - this.wins} more prizes`
+      this.notify()
+      return
+    }
     this.machine = getMachine(id)
     this.prizes = createPrizePile(this.machine, 11)
     this.held = null
@@ -169,7 +188,7 @@ export class ClawGame {
       grip: 1,
     }
     this.phase = 'attract'
-    this.message = `${this.machine.name} · ${this.machine.cost} coins · ${this.machine.difficulty}`
+    this.message = `Lvl ${this.machine.level} ${this.machine.name} · ${this.machine.cost}c · ${this.machine.difficulty}`
     this.persist()
     this.notify()
   }
@@ -277,9 +296,18 @@ export class ClawGame {
       if (this.phase === 'moving') this.queueDrop()
       else this.queuePlay()
     }
-    if (key >= '1' && key <= '4') {
+    if (key >= '1' && key <= '9') {
       const machine = MACHINES[Number(key) - 1]
       if (machine) this.setMachine(machine.id)
+    }
+    if (key === '0') {
+      const machine = MACHINES[9]
+      if (machine) this.setMachine(machine.id)
+    }
+    if (key === '[' || key === ']') {
+      const idx = MACHINES.findIndex((m) => m.id === this.machine.id)
+      const next = key === ']' ? idx + 1 : idx - 1
+      if (next >= 0 && next < MACHINES.length) this.setMachine(MACHINES[next].id)
     }
   }
 
@@ -502,7 +530,11 @@ export class ClawGame {
 
     if (this.score > this.highScore) this.highScore = this.score
     this.spawnBurst(CABINET.chuteX, CABINET.glassBottom - 20, prize.color)
-    this.lastResult = `${prize.label} sealed — open it!`
+
+    const newlyUnlocked = MACHINES.find((m) => m.unlockWins === this.wins)
+    this.lastResult = newlyUnlocked
+      ? `${prize.label} sealed · Unlocked Lvl ${newlyUnlocked.level}!`
+      : `${prize.label} sealed — open it!`
     this.message = this.lastResult
     this.persist()
   }

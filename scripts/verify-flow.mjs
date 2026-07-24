@@ -25,6 +25,7 @@ await page.waitForTimeout(700)
 await page.evaluate(() => {
   localStorage.removeItem('lucky-claw-save-v2')
   localStorage.removeItem('lucky-claw-save-v3')
+  localStorage.removeItem('lucky-claw-save-v4')
 })
 await page.reload({ waitUntil: 'networkidle' })
 await page.waitForSelector('#game')

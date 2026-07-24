@@ -147,11 +147,20 @@ html, body, #app {
   letter-spacing: 0.03em;
 }
 
+.machine-chip.locked {
+  opacity: 0.55;
+  filter: grayscale(0.35);
+}
+
+.machine-chip.pricey .chip-cost {
+  color: #ff8a7a;
+}
+
 .chip-cost {
   justify-self: end;
   font-weight: 800;
   color: var(--amber);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .chip-diff {
