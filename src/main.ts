@@ -1,6 +1,6 @@
 import './style.css'
 import { ClawGame } from './game/Game'
-import { rarityLabel } from './game/prizes'
+import { mutationLabel, rarityLabel } from './game/prizes'
 import { prizeIcon } from './game/render'
 import type { BagPrize, MachineDef, MachineId, OpenReward } from './game/types'
 
@@ -124,10 +124,19 @@ function fitCanvas() {
 }
 
 function showOpenModal(reward: OpenReward) {
-  openKicker.textContent = reward.sticker ? `Collected · ${reward.sticker}` : 'Capsule cracked'
+  const mut = reward.mutation && reward.mutation !== 'none' ? mutationLabel(reward.mutation) : ''
+  openKicker.textContent = mut
+    ? `${mut} · ${reward.sticker ? reward.sticker : 'Mutation cracked'}`
+    : reward.sticker
+      ? `Collected · ${reward.sticker}`
+      : 'Capsule cracked'
   openTitle.textContent = reward.title
   openDetail.textContent = reward.detail
-  openLoot.textContent = `+${reward.coins} coins   ·   +${reward.score} score`
+  const buffBits =
+    reward.buff && reward.buff.playsLeft > 0
+      ? `   ·   buff ${reward.buff.playsLeft}p / ${reward.buff.freePlays} free`
+      : ''
+  openLoot.textContent = `+${reward.coins} coins   ·   +${reward.score} score${buffBits}`
   modal.classList.remove('hidden')
 }
 
@@ -181,20 +190,22 @@ function renderBag(bag: BagPrize[], stickers: string[], sealedCount: number) {
     bagGrid.innerHTML = bag
       .map((item) => {
         const rare = rarityLabel(item.rarity)
+        const mut = item.mutation && item.mutation !== 'none' ? mutationLabel(item.mutation) : ''
+        const mutClass = mut ? ` mut-${item.mutation}` : ''
         if (item.sealed) {
           return `
-            <button type="button" class="capsule sealed rarity-${item.rarity}" data-open="${item.id}" style="--cap:${item.capsule}">
+            <button type="button" class="capsule sealed rarity-${item.rarity}${mutClass}" data-open="${item.id}" style="--cap:${item.capsule}">
               <span class="cap-shine"></span>
               <span class="cap-icon">${prizeIcon(item.kind)}</span>
               <span class="cap-name">${item.label}</span>
-              <span class="cap-rare">${rare}</span>
+              <span class="cap-rare">${mut ? `${mut} · ${rare}` : rare}</span>
               <span class="cap-cta">OPEN</span>
             </button>
           `
         }
         const loot = item.openedReward
         return `
-          <div class="capsule opened rarity-${item.rarity}" style="--cap:${item.capsule}">
+          <div class="capsule opened rarity-${item.rarity}${mutClass}" style="--cap:${item.capsule}">
             <span class="cap-icon">${prizeIcon(item.kind)}</span>
             <span class="cap-name">${item.label}</span>
             <span class="cap-rare">OPENED</span>
@@ -219,11 +230,13 @@ function syncUi() {
   leftBtn.disabled = !state.canMove
   rightBtn.disabled = !state.canMove
   playBtn.textContent =
-    state.coins < state.cost
-      ? 'NEED COINS'
-      : state.phase === 'attract'
-        ? `PLAY · ${state.cost}c`
-        : `AGAIN · ${state.cost}c`
+    state.buff.freePlays > 0
+      ? `FREE MUT · ${state.buff.freePlays}`
+      : state.coins < state.cost
+        ? 'NEED COINS'
+        : state.phase === 'attract'
+          ? `PLAY · ${state.cost}c`
+          : `AGAIN · ${state.cost}c`
   creditsBtn.disabled = !state.canClaimDaily
   creditsBtn.textContent = state.canClaimDaily ? 'DAILY +10' : 'CLAIMED TODAY'
   creditsBtn.title = state.canClaimDaily
@@ -233,9 +246,13 @@ function syncUi() {
   statScore.textContent = String(state.score)
   statBest.textContent = String(state.highScore)
   statSealed.textContent = String(state.sealedCount)
+  const buffLine =
+    state.buff.hitBoost > 0 || state.buff.freePlays > 0
+      ? ` · MUT buff +${state.buff.hitBoost} grab / ${state.buff.freePlays} free / ${state.buff.playsLeft}p left`
+      : ''
   machineBlurb.textContent = state.nextUnlock
-    ? `${state.machine.name} (Lvl ${state.machine.level}) — ${state.machine.blurb} · Next unlock in ${state.nextUnlock.need} wins`
-    : `${state.machine.name} (Lvl ${state.machine.level}) — ${state.machine.blurb} · All levels unlocked`
+    ? `${state.machine.name} (Lvl ${state.machine.level}) — ${state.machine.blurb} · Next unlock in ${state.nextUnlock.need} wins${buffLine}`
+    : `${state.machine.name} (Lvl ${state.machine.level}) — ${state.machine.blurb} · All levels unlocked${buffLine}`
   renderMachines(
     state.machines,
     state.machineId,

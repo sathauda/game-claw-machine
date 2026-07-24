@@ -1,4 +1,12 @@
-import { createPrizePile, openPrizeReward, probeGrab, refillPrizes, settlePrizes } from './prizes'
+import {
+  createPrizePile,
+  emptyBuff,
+  mergeBuff,
+  openPrizeReward,
+  probeGrab,
+  refillPrizes,
+  settlePrizes,
+} from './prizes'
 import {
   drawCabinet,
   drawCabinetBackground,
@@ -17,12 +25,13 @@ import {
   type GamePhase,
   type MachineDef,
   type MachineId,
+  type NeonBuff,
   type OpenReward,
   type Particle,
   type Prize,
 } from './types'
 
-const SAVE_KEY = 'lucky-claw-save-v5'
+const SAVE_KEY = 'lucky-claw-save-v6'
 const START_COINS = 60
 const CREDIT_PACK = 10
 
@@ -36,6 +45,7 @@ interface SaveData {
   machineId: MachineId
   /** Local calendar day (YYYY-MM-DD) when daily credits were last claimed */
   lastDailyCreditDay?: string
+  buff?: NeonBuff
 }
 
 function todayKey(d = new Date()) {
@@ -49,6 +59,7 @@ function loadSave(): SaveData {
   try {
     const raw =
       localStorage.getItem(SAVE_KEY) ||
+      localStorage.getItem('lucky-claw-save-v5') ||
       localStorage.getItem('lucky-claw-save-v4') ||
       localStorage.getItem('lucky-claw-save-v3')
     if (!raw) return defaultSave()
@@ -56,15 +67,22 @@ function loadSave(): SaveData {
     const machineId = MACHINES.some((m) => m.id === data.machineId) ? data.machineId : 'toybox'
     const wins = Number(data.wins) || 0
     const unlocked = getMachine(machineId).unlockWins <= wins ? machineId : 'toybox'
+    const bag = Array.isArray(data.bag)
+      ? data.bag.map((item) => ({
+          ...item,
+          mutation: item.mutation ?? 'none',
+        }))
+      : []
     return {
       coins: Number(data.coins) || START_COINS,
       score: Number(data.score) || 0,
       highScore: Number(data.highScore) || 0,
-      bag: Array.isArray(data.bag) ? data.bag : [],
+      bag,
       stickers: Array.isArray(data.stickers) ? data.stickers : [],
       wins,
       machineId: unlocked,
       lastDailyCreditDay: typeof data.lastDailyCreditDay === 'string' ? data.lastDailyCreditDay : undefined,
+      buff: data.buff ? { ...emptyBuff(), ...data.buff } : emptyBuff(),
     }
   } catch {
     return defaultSave()
@@ -81,6 +99,7 @@ function defaultSave(): SaveData {
     wins: 0,
     machineId: 'toybox',
     lastDailyCreditDay: undefined,
+    buff: emptyBuff(),
   }
 }
 
@@ -106,6 +125,7 @@ export class ClawGame {
   private stickers: string[]
   private wins: number
   private lastDailyCreditDay: string | undefined
+  private buff: NeonBuff = emptyBuff()
   private streak = 0
   private message = 'Pick a machine · aim tight · keep what you hit'
   private lastResult = ''
@@ -136,6 +156,7 @@ export class ClawGame {
     this.stickers = save.stickers
     this.wins = save.wins
     this.lastDailyCreditDay = save.lastDailyCreditDay
+    this.buff = save.buff ? { ...emptyBuff(), ...save.buff } : emptyBuff()
     this.machine = getMachine(save.machineId)
     this.prizes = createPrizePile(this.machine, 11)
     this.resize()
@@ -172,13 +193,22 @@ export class ClawGame {
       cost,
       dailyCreditAmount: CREDIT_PACK,
       canClaimDaily: this.lastDailyCreditDay !== todayKey(),
+      buff: this.buff,
       canPlay:
-        this.coins >= cost &&
+        (this.coins >= cost || this.buff.freePlays > 0) &&
         (this.phase === 'attract' || this.phase === 'ready' || this.phase === 'result'),
       canMove: this.phase === 'moving',
       canDrop: this.phase === 'moving',
       canSwitchMachine: this.phase === 'attract' || this.phase === 'ready' || this.phase === 'result',
     }
+  }
+
+  private effectiveHitPadding() {
+    return this.machine.hitPadding + this.buff.hitBoost
+  }
+
+  private effectiveSway() {
+    return Math.max(0, this.machine.sway - this.buff.swayCut)
   }
 
   isUnlocked(id: MachineId) {
@@ -276,13 +306,20 @@ export class ClawGame {
     const item = this.bag.find((p) => p.id === id && p.sealed)
     if (!item) return null
 
-    const reward = openPrizeReward(item.kind, item.rarity, item.label)
+    const reward = openPrizeReward(item.kind, item.rarity, item.label, item.mutation ?? 'none')
+    const openMult = this.buff.openMult > 1 ? this.buff.openMult : 1
+    reward.coins = Math.round(reward.coins * openMult)
+    reward.score = Math.round(reward.score * openMult)
     item.sealed = false
     item.openedReward = reward
     this.coins += reward.coins
     this.score += reward.score
     if (reward.sticker && !this.stickers.includes(reward.sticker)) {
       this.stickers.push(reward.sticker)
+    }
+    if (reward.buff) {
+      this.buff = mergeBuff(this.buff, reward.buff)
+      reward.detail = `${reward.detail} · claw buff ${this.buff.playsLeft}p / ${this.buff.freePlays} free`
     }
     if (this.score > this.highScore) this.highScore = this.score
     this.lastOpen = reward
@@ -369,6 +406,7 @@ export class ClawGame {
       wins: this.wins,
       machineId: this.machine.id,
       lastDailyCreditDay: this.lastDailyCreditDay,
+      buff: this.buff,
     }
     localStorage.setItem(SAVE_KEY, JSON.stringify(data))
   }
@@ -379,10 +417,11 @@ export class ClawGame {
 
   private update(dt: number) {
     this.updateParticles(dt)
-    this.swayPhase += dt * (2.2 + this.machine.sway * 0.08)
+    const sway = this.effectiveSway()
+    this.swayPhase += dt * (2.2 + sway * 0.08)
     this.displaySway =
       this.phase === 'moving' || this.phase === 'dropping'
-        ? Math.sin(this.swayPhase) * this.machine.sway
+        ? Math.sin(this.swayPhase) * sway
         : this.displaySway * 0.9
 
     if (this.playQueued) {
@@ -412,7 +451,8 @@ export class ClawGame {
         if (this.dropQueued) {
           this.dropQueued = false
           this.phase = 'dropping'
-          this.message = 'Hold steady…'
+          this.message =
+            this.buff.hitBoost > 0 ? 'Hold steady… MUTATION CLAW HOT' : 'Hold steady…'
           this.notify()
         }
         break
@@ -424,7 +464,7 @@ export class ClawGame {
           this.prizes,
           this.grabX(),
           this.claw.cableY + 28,
-          this.machine.hitPadding,
+          this.effectiveHitPadding(),
           this.machine.perfectAlign,
         )
         const reachedFloor = this.claw.cableY >= CABINET.clawMaxY
@@ -493,13 +533,29 @@ export class ClawGame {
   private tryStartRound() {
     if (!(this.phase === 'attract' || this.phase === 'ready' || this.phase === 'result')) return
     const cost = this.machine.cost
-    if (this.coins < cost) {
+    const free = this.buff.freePlays > 0
+    if (!free && this.coins < cost) {
       this.message = `Need ${cost} coins — open prizes or pick a cheaper machine`
       this.notify()
       return
     }
 
-    this.coins -= cost
+    if (free) {
+      this.buff.freePlays -= 1
+    } else {
+      this.coins -= cost
+    }
+
+    if (this.buff.playsLeft > 0) {
+      this.buff.playsLeft -= 1
+      if (this.buff.playsLeft <= 0) {
+        this.buff.hitBoost = 0
+        this.buff.swayCut = 0
+        this.buff.openMult = 1
+        this.buff.playsLeft = 0
+      }
+    }
+
     this.prizes = refillPrizes(this.machine, this.prizes, 9)
     this.held = null
     this.lastOpen = null
@@ -513,7 +569,13 @@ export class ClawGame {
       grip: 1,
     }
     this.phase = 'moving'
-    this.message = `${this.machine.name}: center the claw — sway is real`
+    const buffHint =
+      this.buff.hitBoost > 0
+        ? ` · MUT +${this.buff.hitBoost} grab / -${this.buff.swayCut} sway`
+        : ''
+    this.message = free
+      ? `${this.machine.name}: FREE MUTATION PLAY${buffHint}`
+      : `${this.machine.name}: center the claw — sway is real${buffHint}`
     this.lastResult = ''
     this.persist()
     this.notify()
@@ -524,7 +586,7 @@ export class ClawGame {
       this.prizes,
       this.grabX(),
       this.claw.cableY + 28,
-      this.machine.hitPadding,
+      this.effectiveHitPadding(),
       this.machine.perfectAlign,
     )
 
@@ -566,6 +628,7 @@ export class ClawGame {
       capsule: prize.capsule,
       value: prize.value,
       sealed: true,
+      mutation: prize.mutation ?? 'none',
     }
     this.bag.unshift(bagItem)
 
@@ -573,9 +636,11 @@ export class ClawGame {
     this.spawnBurst(CABINET.chuteX, CABINET.glassBottom - 20, prize.color)
 
     const newlyUnlocked = MACHINES.find((m) => m.unlockWins === this.wins)
+    const mutTag =
+      prize.mutation && prize.mutation !== 'none' ? ` · ${prize.mutation === 'ogMut' ? 'OG MUT' : prize.mutation === 'mythicMut' ? 'MYTHIC MUT' : prize.mutation === 'overcharge' ? 'X-MUT' : 'VOLT'}` : ''
     this.lastResult = newlyUnlocked
-      ? `${prize.label} sealed · Unlocked Lvl ${newlyUnlocked.level}!`
-      : `${prize.label} sealed — open it!`
+      ? `${prize.label} sealed${mutTag} · Unlocked Lvl ${newlyUnlocked.level}!`
+      : `${prize.label} sealed${mutTag} — open it!`
     this.message = this.lastResult
     this.persist()
   }

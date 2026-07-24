@@ -46,9 +46,22 @@ export type PrizeKind =
   | 'neonPulse'
   | 'neonBlade'
   | 'neonFox'
+  | 'neonHydra'
   | 'neonOG'
+  | 'neonKing'
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legend' | 'mythic' | 'og'
+
+/** Neon mutations — higher tiers make prizes and claw buffs OP */
+export type Mutation = 'none' | 'volt' | 'overcharge' | 'mythicMut' | 'ogMut'
+
+export interface NeonBuff {
+  playsLeft: number
+  hitBoost: number
+  swayCut: number
+  freePlays: number
+  openMult: number
+}
 
 export type Difficulty = 'easy' | 'normal' | 'hard' | 'expert' | 'legend' | 'mythic' | 'nightmare' | 'apex'
 
@@ -99,6 +112,7 @@ export interface Prize {
   radius: number
   wobble: number
   grabbed: boolean
+  mutation: Mutation
 }
 
 export interface BagPrize {
@@ -111,6 +125,7 @@ export interface BagPrize {
   capsule: string
   value: number
   sealed: boolean
+  mutation: Mutation
   openedReward?: OpenReward
 }
 
@@ -120,6 +135,8 @@ export interface OpenReward {
   coins: number
   score: number
   sticker?: string
+  mutation?: Mutation
+  buff?: NeonBuff
 }
 
 export interface Particle {
@@ -201,7 +218,9 @@ export const PRIZE_DEFS: PrizeDef[] = [
   { kind: 'neonPulse', label: 'Pulse Orb', value: 26, rarity: 'legend', color: '#7EE0F0', accent: '#FF6B9A', radius: 19, capsule: '#5FD0E0' },
   { kind: 'neonBlade', label: 'Arc Blade', value: 34, rarity: 'mythic', color: '#7EF0C8', accent: '#F4C15D', radius: 21, capsule: '#5FE0B8' },
   { kind: 'neonFox', label: 'Mythic Fox', value: 38, rarity: 'mythic', color: '#FF8A5A', accent: '#7EE0F0', radius: 23, capsule: '#F07040' },
+  { kind: 'neonHydra', label: 'Volt Hydra', value: 42, rarity: 'mythic', color: '#B8FF4A', accent: '#FF6B9A', radius: 24, capsule: '#9AE83A' },
   { kind: 'neonOG', label: 'OG Neon Core', value: 55, rarity: 'og', color: '#7EE0F0', accent: '#B8FF4A', radius: 20, capsule: '#4FC4D8' },
+  { kind: 'neonKing', label: 'OG Neon King', value: 70, rarity: 'og', color: '#FFE29A', accent: '#7EE0F0', radius: 22, capsule: '#FFD27A' },
 ]
 
 export const MACHINES: MachineDef[] = [
@@ -400,7 +419,7 @@ export const MACHINES: MachineDef[] = [
     level: 11,
     name: 'Neon Night',
     short: 'L11 NEON',
-    blurb: 'Neon exclusives · mythic & OG drops',
+    blurb: 'Neon exclusives · mutations · mythic & OG',
     cost: 28,
     unlockWins: 42,
     difficulty: 'mythic',
@@ -421,7 +440,9 @@ export const MACHINES: MachineDef[] = [
       'neonPulse',
       'neonBlade',
       'neonFox',
+      'neonHydra',
       'neonOG',
+      'neonKing',
     ],
   },
   {
@@ -498,7 +519,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#6B3A1E', '#522C16', '#3A1E0F'],
     glass: ['#E0B898', '#C9946A', '#A8744A'],
     marquee: '#6B3A1E',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'trophy', 'crown', 'rocket'],
+    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'trophy', 'crown', 'rocket', 'neonBlade', 'neonFox'],
   },
   {
     id: 'nova',
@@ -517,7 +538,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#7A4A12', '#5C380C', '#402708'],
     glass: ['#FFE6A8', '#F0C86A', '#D4A845'],
     marquee: '#7A4A12',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'headphones', 'gem', 'crown'],
+    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'headphones', 'gem', 'crown', 'neonHydra', 'neonFox'],
   },
   {
     id: 'ember',
@@ -536,7 +557,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#8B2A12', '#6A1F0C', '#4A1508'],
     glass: ['#FFB08A', '#E88855', '#C86435'],
     marquee: '#8B2A12',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'rocket', 'trophy', 'crown'],
+    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'rocket', 'trophy', 'crown', 'neonBlade', 'neonOG'],
   },
   {
     id: 'frost',
@@ -574,7 +595,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#1A3A2E', '#123028', '#0C201A'],
     glass: ['#A8E0C8', '#7EC8A8', '#5AA888'],
     marquee: '#1A3A2E',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'crown', 'trophy', 'rocket', 'gem'],
+    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'crown', 'trophy', 'rocket', 'gem', 'neonHydra', 'neonOG', 'neonKing'],
   },
   {
     id: 'apex',
@@ -593,7 +614,21 @@ export const MACHINES: MachineDef[] = [
     body: ['#1A0A0A', '#120606', '#0A0404'],
     glass: ['#FFD27A', '#E8B04A', '#C9902E'],
     marquee: '#1A0A0A',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'headphones', 'crown', 'trophy', 'rocket', 'gem'],
+    prizeKinds: [
+      'jackpot',
+      'tablet',
+      'phone',
+      'watch',
+      'headphones',
+      'crown',
+      'trophy',
+      'rocket',
+      'gem',
+      'neonFox',
+      'neonHydra',
+      'neonOG',
+      'neonKing',
+    ],
   },
 ]
 

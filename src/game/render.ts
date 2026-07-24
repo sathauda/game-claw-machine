@@ -202,7 +202,9 @@ export function drawPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     case 'neonPulse':
     case 'neonBlade':
     case 'neonFox':
+    case 'neonHydra':
     case 'neonOG':
+    case 'neonKing':
       drawNeonPrize(ctx, p, time)
       break
   }
@@ -220,16 +222,63 @@ function withAlpha(hex: string, alpha: number) {
   return `rgba(126, 224, 240, ${alpha})`
 }
 
-function neonGlow(ctx: CanvasRenderingContext2D, color: string, time: number, wobble: number, radius: number) {
-  const pulse = 0.35 + Math.sin(time * 7 + wobble) * 0.2
+function neonGlow(
+  ctx: CanvasRenderingContext2D,
+  color: string,
+  time: number,
+  wobble: number,
+  radius: number,
+  strength = 1,
+) {
+  const pulse = (0.35 + Math.sin(time * 7 + wobble) * 0.2) * strength
   ctx.beginPath()
-  ctx.fillStyle = withAlpha(color, pulse)
-  ctx.arc(0, 0, radius * 1.35, 0, Math.PI * 2)
+  ctx.fillStyle = withAlpha(color, Math.min(0.85, pulse))
+  ctx.arc(0, 0, radius * (1.35 + 0.15 * strength), 0, Math.PI * 2)
   ctx.fill()
 }
 
+function mutationStrength(p: Prize): number {
+  switch (p.mutation) {
+    case 'ogMut':
+      return 2.4
+    case 'mythicMut':
+      return 1.9
+    case 'overcharge':
+      return 1.55
+    case 'volt':
+      return 1.25
+    default:
+      return 1
+  }
+}
+
+function drawMutationRing(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  if (!p.mutation || p.mutation === 'none') return
+  const colors: Record<string, string> = {
+    volt: '#B8FF4A',
+    overcharge: '#FF6B9A',
+    mythicMut: '#FF8A5A',
+    ogMut: '#FFE29A',
+  }
+  const c = colors[p.mutation] ?? p.accent
+  const spin = time * 4 + p.wobble
+  ctx.strokeStyle = withAlpha(c, 0.75)
+  ctx.lineWidth = p.mutation === 'ogMut' ? 3.5 : 2.5
+  ctx.beginPath()
+  ctx.arc(0, 0, p.radius * 1.15, spin, spin + Math.PI * 1.35)
+  ctx.stroke()
+  if (p.mutation === 'ogMut' || p.mutation === 'mythicMut') {
+    ctx.beginPath()
+    ctx.strokeStyle = withAlpha('#7EE0F0', 0.55)
+    ctx.arc(0, 0, p.radius * 1.28, -spin, -spin + Math.PI)
+    ctx.stroke()
+  }
+}
+
 function drawNeonPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
-  neonGlow(ctx, p.color, time, p.wobble, p.radius)
+  const strength = mutationStrength(p)
+  neonGlow(ctx, p.color, time, p.wobble, p.radius, strength)
+  drawMutationRing(ctx, p, time)
   switch (p.kind) {
     case 'neonStick':
       drawNeonStick(ctx, p)
@@ -255,8 +304,14 @@ function drawNeonPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
     case 'neonFox':
       drawNeonFox(ctx, p)
       break
+    case 'neonHydra':
+      drawNeonHydra(ctx, p, time)
+      break
     case 'neonOG':
       drawNeonOG(ctx, p, time)
+      break
+    case 'neonKing':
+      drawNeonKing(ctx, p, time)
       break
   }
 }
@@ -435,6 +490,55 @@ function drawNeonOG(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText('OG', 0, 1)
+  ctx.textBaseline = 'alphabetic'
+}
+
+function drawNeonHydra(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  const r = p.radius
+  const bob = Math.sin(time * 6 + p.wobble) * 2
+  ctx.fillStyle = p.color
+  for (const [ox, oy] of [
+    [-r * 0.45, -r * 0.35 + bob],
+    [0, -r * 0.55 - bob],
+    [r * 0.45, -r * 0.35 + bob],
+  ]) {
+    ctx.beginPath()
+    ctx.ellipse(ox, oy, r * 0.28, r * 0.38, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = p.accent
+    ctx.beginPath()
+    ctx.arc(ox, oy - 4, 2.2, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = p.color
+  }
+  ctx.fillStyle = p.accent
+  roundRect(ctx, -r * 0.35, 2, r * 0.7, r * 0.75, 10)
+  ctx.fill()
+}
+
+function drawNeonKing(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  const r = p.radius
+  const pulse = 0.85 + Math.sin(time * 5 + p.wobble) * 0.1
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.arc(0, 4, r * 0.7 * pulse, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.7, -r * 0.15)
+  ctx.lineTo(-r * 0.45, -r * 0.85)
+  ctx.lineTo(-r * 0.15, -r * 0.25)
+  ctx.lineTo(0, -r * 0.95)
+  ctx.lineTo(r * 0.15, -r * 0.25)
+  ctx.lineTo(r * 0.45, -r * 0.85)
+  ctx.lineTo(r * 0.7, -r * 0.15)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = '#0A1A22'
+  ctx.font = `bold ${Math.floor(r * 0.42)}px Nunito, system-ui`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('OG', 0, 6)
   ctx.textBaseline = 'alphabetic'
 }
 
@@ -1212,7 +1316,9 @@ export function prizeIcon(kind: PrizeKind): string {
     neonPulse: 'PULSE',
     neonBlade: 'BLADE',
     neonFox: 'FOX',
+    neonHydra: 'HYDRA',
     neonOG: 'OG',
+    neonKing: 'KING',
   }
   return map[kind]
 }
