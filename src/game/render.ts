@@ -146,9 +146,397 @@ export function drawPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     case 'tablet':
       drawTablet(ctx, p)
       break
+    case 'cat':
+      drawCat(ctx, p)
+      break
+    case 'dino':
+      drawDino(ctx, p)
+      break
+    case 'unicorn':
+      drawUnicorn(ctx, p)
+      break
+    case 'penguin':
+      drawPenguin(ctx, p)
+      break
+    case 'soccer':
+      drawSoccer(ctx, p)
+      break
+    case 'drone':
+      drawDrone(ctx, p)
+      break
+    case 'camera':
+      drawCamera(ctx, p)
+      break
+    case 'console':
+      drawConsole(ctx, p)
+      break
+    case 'speaker':
+      drawSpeaker(ctx, p)
+      break
+    case 'laptop':
+      drawLaptop(ctx, p)
+      break
+    case 'ring':
+      drawRing(ctx, p)
+      break
+    case 'sneakers':
+      drawSneakers(ctx, p)
+      break
+    case 'gem':
+      drawGem(ctx, p)
+      break
+    case 'trophy':
+      drawTrophy(ctx, p)
+      break
+    case 'rocket':
+      drawRocket(ctx, p)
+      break
+    case 'crown':
+      drawCrown(ctx, p)
+      break
   }
 
   ctx.restore()
+}
+
+function drawCat(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.arc(0, 2, r * 0.72, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.55, -r * 0.2)
+  ctx.lineTo(-r * 0.75, -r * 0.75)
+  ctx.lineTo(-r * 0.2, -r * 0.45)
+  ctx.moveTo(r * 0.55, -r * 0.2)
+  ctx.lineTo(r * 0.75, -r * 0.75)
+  ctx.lineTo(r * 0.2, -r * 0.45)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.arc(-6, 0, 2, 0, Math.PI * 2)
+  ctx.arc(6, 0, 2, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.moveTo(0, 4)
+  ctx.lineTo(-3, 8)
+  ctx.lineTo(3, 8)
+  ctx.fill()
+}
+
+function drawDino(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.55, -r * 0.2, r * 1.2, r * 0.85, 8)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.arc(r * 0.45, -r * 0.35, r * 0.4, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath()
+    ctx.moveTo(-r * 0.35 + i * r * 0.28, -r * 0.2)
+    ctx.lineTo(-r * 0.25 + i * r * 0.28, -r * 0.55)
+    ctx.lineTo(-r * 0.15 + i * r * 0.28, -r * 0.2)
+    ctx.fill()
+  }
+  ctx.fillStyle = '#2B2B2B'
+  ctx.beginPath()
+  ctx.arc(r * 0.55, -r * 0.4, 2.2, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawUnicorn(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.arc(0, 4, r * 0.7, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.15)
+  ctx.lineTo(-4, -r * 0.85)
+  ctx.lineTo(4, -r * 0.85)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = '#F4C15D'
+  ctx.beginPath()
+  ctx.moveTo(2, -r * 0.2)
+  ctx.lineTo(0, -r * 0.95)
+  ctx.lineTo(8, -r * 0.35)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = '#2B2B2B'
+  ctx.beginPath()
+  ctx.arc(-6, 2, 2, 0, Math.PI * 2)
+  ctx.arc(6, 2, 2, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawPenguin(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.ellipse(0, 2, r * 0.65, r * 0.85, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.ellipse(0, 8, r * 0.4, r * 0.5, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = '#F4C15D'
+  ctx.beginPath()
+  ctx.moveTo(0, 0)
+  ctx.lineTo(-5, 5)
+  ctx.lineTo(5, 5)
+  ctx.fill()
+  ctx.fillStyle = '#F7E8C8'
+  ctx.beginPath()
+  ctx.arc(-6, -6, 2.2, 0, Math.PI * 2)
+  ctx.arc(6, -6, 2.2, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawSoccer(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.85, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.strokeStyle = p.accent
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.85, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.85)
+  ctx.lineTo(0, r * 0.85)
+  ctx.moveTo(-r * 0.85, 0)
+  ctx.lineTo(r * 0.85, 0)
+  ctx.stroke()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.22, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawDrone(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.45, -r * 0.2, r * 0.9, r * 0.4, 6)
+  ctx.fill()
+  ctx.strokeStyle = p.accent
+  ctx.lineWidth = 3
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.45, 0)
+  ctx.lineTo(-r * 0.9, -r * 0.45)
+  ctx.moveTo(r * 0.45, 0)
+  ctx.lineTo(r * 0.9, -r * 0.45)
+  ctx.moveTo(-r * 0.45, 0)
+  ctx.lineTo(-r * 0.85, r * 0.45)
+  ctx.moveTo(r * 0.45, 0)
+  ctx.lineTo(r * 0.85, r * 0.45)
+  ctx.stroke()
+  ctx.fillStyle = p.accent
+  for (const [x, y] of [
+    [-r * 0.9, -r * 0.45],
+    [r * 0.9, -r * 0.45],
+    [-r * 0.85, r * 0.45],
+    [r * 0.85, r * 0.45],
+  ] as const) {
+    ctx.beginPath()
+    ctx.arc(x, y, 4, 0, Math.PI * 2)
+    ctx.fill()
+  }
+}
+
+function drawCamera(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.85, -r * 0.45, r * 1.7, r * 0.95, 8)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.35, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = '#7EC8C8'
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.18, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = '#E85D4C'
+  roundRect(ctx, r * 0.35, -r * 0.55, r * 0.25, r * 0.18, 3)
+  ctx.fill()
+}
+
+function drawConsole(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.9, -r * 0.45, r * 1.8, r * 0.9, 12)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.arc(-r * 0.45, 0, r * 0.22, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = '#E85D4C'
+  ctx.beginPath()
+  ctx.arc(r * 0.35, -6, 4, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = '#F4C15D'
+  ctx.beginPath()
+  ctx.arc(r * 0.55, 4, 4, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawSpeaker(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.55, -r * 0.75, r * 1.1, r * 1.5, 8)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.arc(0, -r * 0.25, r * 0.28, 0, Math.PI * 2)
+  ctx.arc(0, r * 0.35, r * 0.35, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawLaptop(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.85, -r * 0.65, r * 1.7, r * 1.0, 6)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  roundRect(ctx, -r * 0.7, -r * 0.5, r * 1.4, r * 0.7, 3)
+  ctx.fill()
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.95, r * 0.35, r * 1.9, r * 0.22, 3)
+  ctx.fill()
+}
+
+function drawRing(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.strokeStyle = p.color
+  ctx.lineWidth = 5
+  ctx.beginPath()
+  ctx.arc(0, 4, r * 0.55, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.55)
+  ctx.lineTo(-6, -r * 0.15)
+  ctx.lineTo(0, r * 0.05)
+  ctx.lineTo(6, -r * 0.15)
+  ctx.closePath()
+  ctx.fill()
+}
+
+function drawSneakers(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.9, -r * 0.15, r * 1.8, r * 0.55, 10)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.ellipse(r * 0.55, -r * 0.05, r * 0.45, r * 0.35, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  roundRect(ctx, -r * 0.9, r * 0.25, r * 1.8, r * 0.22, 4)
+  ctx.fill()
+}
+
+function drawGem(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.9)
+  ctx.lineTo(r * 0.7, -r * 0.2)
+  ctx.lineTo(r * 0.45, r * 0.85)
+  ctx.lineTo(-r * 0.45, r * 0.85)
+  ctx.lineTo(-r * 0.7, -r * 0.2)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = 'rgba(255,255,255,0.35)'
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.7)
+  ctx.lineTo(r * 0.25, -r * 0.2)
+  ctx.lineTo(0, r * 0.1)
+  ctx.lineTo(-r * 0.15, -r * 0.15)
+  ctx.closePath()
+  ctx.fill()
+}
+
+function drawTrophy(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.45, -r * 0.55)
+  ctx.lineTo(r * 0.45, -r * 0.55)
+  ctx.lineTo(r * 0.3, r * 0.15)
+  ctx.lineTo(-r * 0.3, r * 0.15)
+  ctx.closePath()
+  ctx.fill()
+  ctx.strokeStyle = p.color
+  ctx.lineWidth = 4
+  ctx.beginPath()
+  ctx.arc(-r * 0.45, -r * 0.25, r * 0.28, Math.PI * 0.5, Math.PI * 1.5)
+  ctx.arc(r * 0.45, -r * 0.25, r * 0.28, -Math.PI * 0.5, Math.PI * 0.5)
+  ctx.stroke()
+  ctx.fillStyle = p.accent
+  roundRect(ctx, -r * 0.18, r * 0.15, r * 0.36, r * 0.35, 3)
+  ctx.fill()
+  roundRect(ctx, -r * 0.4, r * 0.5, r * 0.8, r * 0.22, 4)
+  ctx.fill()
+}
+
+function drawRocket(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.95)
+  ctx.lineTo(r * 0.4, -r * 0.2)
+  ctx.lineTo(r * 0.4, r * 0.45)
+  ctx.lineTo(-r * 0.4, r * 0.45)
+  ctx.lineTo(-r * 0.4, -r * 0.2)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.4, r * 0.2)
+  ctx.lineTo(-r * 0.75, r * 0.65)
+  ctx.lineTo(-r * 0.4, r * 0.45)
+  ctx.moveTo(r * 0.4, r * 0.2)
+  ctx.lineTo(r * 0.75, r * 0.65)
+  ctx.lineTo(r * 0.4, r * 0.45)
+  ctx.fill()
+  ctx.fillStyle = '#F4C15D'
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.2, r * 0.45)
+  ctx.lineTo(0, r * 0.9)
+  ctx.lineTo(r * 0.2, r * 0.45)
+  ctx.fill()
+  ctx.fillStyle = '#7EC8C8'
+  ctx.beginPath()
+  ctx.arc(0, -r * 0.15, r * 0.16, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawCrown(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.85, r * 0.35)
+  ctx.lineTo(-r * 0.7, -r * 0.45)
+  ctx.lineTo(-r * 0.35, r * 0.05)
+  ctx.lineTo(0, -r * 0.7)
+  ctx.lineTo(r * 0.35, r * 0.05)
+  ctx.lineTo(r * 0.7, -r * 0.45)
+  ctx.lineTo(r * 0.85, r * 0.35)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  for (const x of [-r * 0.7, 0, r * 0.7]) {
+    ctx.beginPath()
+    ctx.arc(x, x === 0 ? -r * 0.55 : -r * 0.3, 3.5, 0, Math.PI * 2)
+    ctx.fill()
+  }
 }
 
 function drawJackpot(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
@@ -548,30 +936,35 @@ function starPath(
 }
 
 export function prizeIcon(kind: PrizeKind): string {
-  switch (kind) {
-    case 'bear':
-      return 'BEAR'
-    case 'star':
-      return 'STAR'
-    case 'duck':
-      return 'DUCK'
-    case 'heart':
-      return 'HEART'
-    case 'robot':
-      return 'BOT'
-    case 'jackpot':
-      return 'GOLD'
-    case 'car':
-      return 'CAR'
-    case 'doll':
-      return 'DOLL'
-    case 'phone':
-      return 'PHONE'
-    case 'watch':
-      return 'WATCH'
-    case 'headphones':
-      return 'AUDIO'
-    case 'tablet':
-      return 'TAB'
+  const map: Record<PrizeKind, string> = {
+    bear: 'BEAR',
+    star: 'STAR',
+    duck: 'DUCK',
+    heart: 'HEART',
+    robot: 'BOT',
+    jackpot: 'GOLD',
+    car: 'CAR',
+    doll: 'DOLL',
+    phone: 'PHONE',
+    watch: 'WATCH',
+    headphones: 'AUDIO',
+    tablet: 'TAB',
+    cat: 'CAT',
+    dino: 'DINO',
+    unicorn: 'UNI',
+    penguin: 'PENGUIN',
+    soccer: 'BALL',
+    drone: 'DRONE',
+    camera: 'CAM',
+    console: 'GAME',
+    speaker: 'BOOM',
+    laptop: 'NOTE',
+    ring: 'RING',
+    sneakers: 'KICKS',
+    gem: 'GEM',
+    trophy: 'CUP',
+    rocket: 'ROCKET',
+    crown: 'CROWN',
   }
+  return map[kind]
 }

@@ -22,6 +22,22 @@ export type PrizeKind =
   | 'watch'
   | 'headphones'
   | 'tablet'
+  | 'cat'
+  | 'dino'
+  | 'unicorn'
+  | 'penguin'
+  | 'soccer'
+  | 'drone'
+  | 'camera'
+  | 'console'
+  | 'speaker'
+  | 'laptop'
+  | 'ring'
+  | 'sneakers'
+  | 'gem'
+  | 'trophy'
+  | 'rocket'
+  | 'crown'
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legend'
 
@@ -142,15 +158,31 @@ export const PRIZE_DEFS: PrizeDef[] = [
   { kind: 'duck', label: 'Bath Duck', value: 2, rarity: 'common', color: '#FFE566', accent: '#F0A500', radius: 24, capsule: '#F6D860' },
   { kind: 'bear', label: 'Honey Bear', value: 3, rarity: 'common', color: '#D4A574', accent: '#8B5A2B', radius: 26, capsule: '#C9956A' },
   { kind: 'car', label: 'Race Car', value: 4, rarity: 'common', color: '#E85D4C', accent: '#7A1510', radius: 22, capsule: '#F07167' },
+  { kind: 'cat', label: 'Kitty Plush', value: 3, rarity: 'common', color: '#F0C89A', accent: '#C48A4A', radius: 24, capsule: '#E8B87A' },
+  { kind: 'penguin', label: 'Chill Penguin', value: 3, rarity: 'common', color: '#2B2B2B', accent: '#F7E8C8', radius: 23, capsule: '#5A5A5A' },
+  { kind: 'soccer', label: 'Goal Ball', value: 3, rarity: 'common', color: '#F7F7F7', accent: '#2B2B2B', radius: 22, capsule: '#D8D8D8' },
   { kind: 'doll', label: 'Ribbon Doll', value: 5, rarity: 'rare', color: '#FFB4C8', accent: '#D45A7A', radius: 24, capsule: '#FF9BB3' },
   { kind: 'heart', label: 'Candy Heart', value: 4, rarity: 'rare', color: '#FF6B8A', accent: '#E63956', radius: 22, capsule: '#FF7A98' },
   { kind: 'star', label: 'Lucky Star', value: 5, rarity: 'rare', color: '#F4C15D', accent: '#E8952A', radius: 20, capsule: '#FFC94A' },
+  { kind: 'dino', label: 'Pixel Dino', value: 6, rarity: 'rare', color: '#5FBF6A', accent: '#2E7A38', radius: 25, capsule: '#7AD184' },
+  { kind: 'unicorn', label: 'Sparkle Unicorn', value: 7, rarity: 'rare', color: '#FFE8F2', accent: '#E890B8', radius: 25, capsule: '#FFD0E0' },
+  { kind: 'sneakers', label: 'Kick Kicks', value: 7, rarity: 'rare', color: '#F4C15D', accent: '#C62828', radius: 22, capsule: '#E8B04A' },
   { kind: 'robot', label: 'Tin Bot', value: 6, rarity: 'epic', color: '#7EC8C8', accent: '#2A8A8A', radius: 24, capsule: '#5FB8B8' },
   { kind: 'headphones', label: 'Beat Cans', value: 8, rarity: 'epic', color: '#4A4A55', accent: '#F4C15D', radius: 22, capsule: '#6B6B78' },
+  { kind: 'speaker', label: 'Boom Box', value: 9, rarity: 'epic', color: '#3A3A44', accent: '#7EC8C8', radius: 23, capsule: '#555560' },
+  { kind: 'camera', label: 'Snap Cam', value: 10, rarity: 'epic', color: '#2B2B2B', accent: '#F4C15D', radius: 21, capsule: '#4A4A4A' },
+  { kind: 'console', label: 'Play Brick', value: 11, rarity: 'epic', color: '#1F4E5F', accent: '#7EC8C8', radius: 22, capsule: '#2A6A7A' },
   { kind: 'watch', label: 'Chrono Watch', value: 12, rarity: 'epic', color: '#C9CED6', accent: '#2B2B2B', radius: 18, capsule: '#A8B0BC' },
+  { kind: 'drone', label: 'Sky Drone', value: 13, rarity: 'epic', color: '#5A6A78', accent: '#F4C15D', radius: 22, capsule: '#7A8A98' },
+  { kind: 'ring', label: 'Lucky Ring', value: 14, rarity: 'epic', color: '#FFE29A', accent: '#E8A030', radius: 17, capsule: '#FFD27A' },
   { kind: 'phone', label: 'Glow Phone', value: 16, rarity: 'legend', color: '#1C1C22', accent: '#7EC8C8', radius: 17, capsule: '#3A3A44' },
+  { kind: 'laptop', label: 'Slim Note', value: 18, rarity: 'legend', color: '#2A2A32', accent: '#C9CED6', radius: 22, capsule: '#454550' },
   { kind: 'tablet', label: 'Pocket Tab', value: 20, rarity: 'legend', color: '#22222A', accent: '#F4C15D', radius: 20, capsule: '#3F3F4A' },
-  { kind: 'jackpot', label: 'Gold Brick', value: 25, rarity: 'legend', color: '#FFE29A', accent: '#FF8A3D', radius: 18, capsule: '#FFB347' },
+  { kind: 'gem', label: 'Aqua Gem', value: 22, rarity: 'legend', color: '#4FD0E0', accent: '#1A8A98', radius: 18, capsule: '#6FE0F0' },
+  { kind: 'trophy', label: 'Gold Trophy', value: 24, rarity: 'legend', color: '#F4C15D', accent: '#B88420', radius: 22, capsule: '#FFD27A' },
+  { kind: 'rocket', label: 'Mini Rocket', value: 26, rarity: 'legend', color: '#E85D4C', accent: '#F7E8C8', radius: 23, capsule: '#F07167' },
+  { kind: 'crown', label: 'Arcade Crown', value: 28, rarity: 'legend', color: '#FFE29A', accent: '#E8A030', radius: 22, capsule: '#FFD27A' },
+  { kind: 'jackpot', label: 'Gold Brick', value: 30, rarity: 'legend', color: '#FFE29A', accent: '#FF8A3D', radius: 18, capsule: '#FFB347' },
 ]
 
 export const MACHINES: MachineDef[] = [
@@ -171,7 +203,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#C62828', '#A11818', '#7A0F12'],
     glass: ['#9AD7D4', '#7EC8C8', '#5BA8A8'],
     marquee: '#C62828',
-    prizeKinds: ['duck', 'bear', 'car', 'star'],
+    prizeKinds: ['duck', 'bear', 'car', 'cat', 'penguin', 'soccer', 'star'],
   },
   {
     id: 'candy',
@@ -190,7 +222,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#D94F6D', '#B33B55', '#8A2C41'],
     glass: ['#FFD0DA', '#F5A9B8', '#E0879A'],
     marquee: '#D94F6D',
-    prizeKinds: ['heart', 'star', 'duck', 'doll', 'bear'],
+    prizeKinds: ['heart', 'star', 'duck', 'doll', 'bear', 'unicorn', 'cat'],
   },
   {
     id: 'plush',
@@ -209,7 +241,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#B33B5A', '#8E2E46', '#6A2033'],
     glass: ['#F2C4D0', '#E3A0B2', '#C97E93'],
     marquee: '#B33B5A',
-    prizeKinds: ['bear', 'doll', 'robot', 'heart', 'duck', 'car'],
+    prizeKinds: ['bear', 'doll', 'robot', 'heart', 'duck', 'cat', 'dino', 'penguin'],
   },
   {
     id: 'race',
@@ -228,7 +260,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#D35400', '#A84200', '#7A3000'],
     glass: ['#F5C79A', '#E3A56A', '#C98445'],
     marquee: '#D35400',
-    prizeKinds: ['car', 'star', 'robot', 'headphones', 'duck'],
+    prizeKinds: ['car', 'star', 'robot', 'headphones', 'soccer', 'sneakers', 'dino'],
   },
   {
     id: 'botbay',
@@ -247,7 +279,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#2E6B5A', '#215045', '#16382F'],
     glass: ['#A8E0D0', '#7EC8B8', '#5AA898'],
     marquee: '#2E6B5A',
-    prizeKinds: ['robot', 'headphones', 'car', 'watch', 'star'],
+    prizeKinds: ['robot', 'headphones', 'car', 'watch', 'speaker', 'console', 'drone'],
   },
   {
     id: 'gadget',
@@ -266,7 +298,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#1F4E5F', '#163A46', '#0F2830'],
     glass: ['#8FD3E8', '#5FB4CF', '#3A8FA8'],
     marquee: '#1F4E5F',
-    prizeKinds: ['phone', 'watch', 'headphones', 'robot', 'star'],
+    prizeKinds: ['phone', 'watch', 'headphones', 'camera', 'console', 'speaker', 'drone'],
   },
   {
     id: 'chrono',
@@ -285,7 +317,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#3D4A5C', '#2C3644', '#1C232D'],
     glass: ['#C9D4E0', '#A8B8C8', '#8798AA'],
     marquee: '#3D4A5C',
-    prizeKinds: ['watch', 'phone', 'headphones', 'tablet', 'robot'],
+    prizeKinds: ['watch', 'phone', 'headphones', 'tablet', 'ring', 'camera', 'drone'],
   },
   {
     id: 'vip',
@@ -304,7 +336,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#8A6A1F', '#6B5216', '#4A390F'],
     glass: ['#FFE29A', '#E8C56A', '#C9A445'],
     marquee: '#8A6A1F',
-    prizeKinds: ['phone', 'watch', 'tablet', 'jackpot', 'headphones'],
+    prizeKinds: ['phone', 'watch', 'tablet', 'laptop', 'jackpot', 'headphones', 'gem'],
   },
   {
     id: 'forge',
@@ -323,7 +355,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#A65D1A', '#824812', '#5C330C'],
     glass: ['#FFD28A', '#F0B85A', '#D99A3A'],
     marquee: '#A65D1A',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'headphones'],
+    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'trophy', 'gem', 'crown'],
   },
   {
     id: 'mythic',
@@ -342,7 +374,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#5C1A1A', '#401212', '#2A0C0C'],
     glass: ['#E8B86A', '#D4A045', '#B8862E'],
     marquee: '#5C1A1A',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'headphones', 'robot'],
+    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'rocket', 'crown', 'trophy', 'gem'],
   },
   {
     id: 'neon',
@@ -361,7 +393,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#0E3D4A', '#0A2C36', '#061C24'],
     glass: ['#7EE0F0', '#4FC4D8', '#2AA0B8'],
     marquee: '#0E3D4A',
-    prizeKinds: ['phone', 'headphones', 'watch', 'tablet', 'jackpot'],
+    prizeKinds: ['phone', 'headphones', 'watch', 'tablet', 'laptop', 'drone', 'console'],
   },
   {
     id: 'storm',
@@ -380,7 +412,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#1A3358', '#122440', '#0C182C'],
     glass: ['#9BB8E0', '#6F92C4', '#4A6FA0'],
     marquee: '#1A3358',
-    prizeKinds: ['watch', 'phone', 'tablet', 'headphones', 'robot'],
+    prizeKinds: ['watch', 'phone', 'tablet', 'headphones', 'drone', 'camera', 'laptop'],
   },
   {
     id: 'crystal',
@@ -399,7 +431,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#4A6A78', '#35505C', '#243842'],
     glass: ['#D8EEF5', '#B5D8E4', '#8FBAC8'],
     marquee: '#4A6A78',
-    prizeKinds: ['tablet', 'phone', 'watch', 'jackpot', 'headphones'],
+    prizeKinds: ['tablet', 'phone', 'watch', 'jackpot', 'gem', 'crown', 'ring'],
   },
   {
     id: 'shadow',
@@ -418,7 +450,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#2A2A32', '#1C1C22', '#121216'],
     glass: ['#6A6A78', '#50505C', '#3A3A44'],
     marquee: '#2A2A32',
-    prizeKinds: ['phone', 'watch', 'tablet', 'jackpot', 'headphones', 'robot'],
+    prizeKinds: ['phone', 'watch', 'tablet', 'jackpot', 'laptop', 'rocket', 'gem'],
   },
   {
     id: 'titan',
@@ -437,7 +469,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#6B3A1E', '#522C16', '#3A1E0F'],
     glass: ['#E0B898', '#C9946A', '#A8744A'],
     marquee: '#6B3A1E',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch'],
+    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'trophy', 'crown', 'rocket'],
   },
   {
     id: 'nova',
@@ -456,7 +488,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#7A4A12', '#5C380C', '#402708'],
     glass: ['#FFE6A8', '#F0C86A', '#D4A845'],
     marquee: '#7A4A12',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'headphones'],
+    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'headphones', 'gem', 'crown'],
   },
   {
     id: 'ember',
@@ -475,7 +507,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#8B2A12', '#6A1F0C', '#4A1508'],
     glass: ['#FFB08A', '#E88855', '#C86435'],
     marquee: '#8B2A12',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch'],
+    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'rocket', 'trophy', 'crown'],
   },
   {
     id: 'frost',
@@ -494,7 +526,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#2A4A5C', '#1E3644', '#142430'],
     glass: ['#C8E8F5', '#9CCFE4', '#6FB0C8'],
     marquee: '#2A4A5C',
-    prizeKinds: ['tablet', 'phone', 'watch', 'jackpot', 'headphones'],
+    prizeKinds: ['tablet', 'phone', 'watch', 'jackpot', 'gem', 'laptop', 'drone'],
   },
   {
     id: 'omega',
@@ -513,7 +545,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#1A3A2E', '#123028', '#0C201A'],
     glass: ['#A8E0C8', '#7EC8A8', '#5AA888'],
     marquee: '#1A3A2E',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch'],
+    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'crown', 'trophy', 'rocket', 'gem'],
   },
   {
     id: 'apex',
@@ -532,7 +564,7 @@ export const MACHINES: MachineDef[] = [
     body: ['#1A0A0A', '#120606', '#0A0404'],
     glass: ['#FFD27A', '#E8B04A', '#C9902E'],
     marquee: '#1A0A0A',
-    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'headphones'],
+    prizeKinds: ['jackpot', 'tablet', 'phone', 'watch', 'headphones', 'crown', 'trophy', 'rocket', 'gem'],
   },
 ]
 

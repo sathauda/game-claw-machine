@@ -154,34 +154,90 @@ export function probeGrab(
 export function openPrizeReward(kind: PrizeKind, rarity: Rarity, label: string): OpenReward {
   const roll = Math.random()
 
-  if (kind === 'phone' || kind === 'tablet' || kind === 'jackpot') {
-    const coins = 10 + Math.floor(Math.random() * 8)
+  const legendTech = new Set<PrizeKind>(['phone', 'tablet', 'laptop', 'jackpot', 'gem', 'trophy', 'rocket', 'crown'])
+  if (legendTech.has(kind)) {
+    const coins = 10 + Math.floor(Math.random() * 10)
+    const titles: Partial<Record<PrizeKind, string>> = {
+      jackpot: 'GOLD HAUL!',
+      gem: 'GEM BURST!',
+      trophy: 'CHAMP LOOT!',
+      rocket: 'BLAST PAYOUT!',
+      crown: 'ROYAL DROP!',
+      laptop: 'NOTEBOOK WIN!',
+    }
     return {
-      title: kind === 'jackpot' ? 'GOLD HAUL!' : 'TECH UNLOCKED!',
+      title: titles[kind] ?? 'TECH UNLOCKED!',
       detail: `${label} cracked open with premium loot`,
       coins,
-      score: 24 + Math.floor(Math.random() * 20),
-      sticker: kind === 'phone' ? 'Phone Badge' : kind === 'tablet' ? 'Tablet Seal' : 'Gold Brick Seal',
+      score: 22 + Math.floor(Math.random() * 22),
+      sticker:
+        kind === 'phone'
+          ? 'Phone Badge'
+          : kind === 'tablet'
+            ? 'Tablet Seal'
+            : kind === 'laptop'
+              ? 'Note Seal'
+              : kind === 'gem'
+                ? 'Aqua Gem Pin'
+                : kind === 'trophy'
+                  ? 'Trophy Crest'
+                  : kind === 'rocket'
+                    ? 'Rocket Patch'
+                    : kind === 'crown'
+                      ? 'Crown Seal'
+                      : 'Gold Brick Seal',
     }
   }
 
-  if (kind === 'watch' || kind === 'headphones') {
+  const gadgets = new Set<PrizeKind>(['watch', 'headphones', 'drone', 'camera', 'console', 'speaker', 'ring'])
+  if (gadgets.has(kind)) {
     return {
       title: 'Gadget score!',
       detail: `${label} paid out arcade credits`,
-      coins: 6 + Math.floor(Math.random() * 4),
-      score: 14 + Math.floor(Math.random() * 10),
-      sticker: kind === 'watch' ? 'Chrono Pin' : 'Beat Badge',
+      coins: 6 + Math.floor(Math.random() * 5),
+      score: 12 + Math.floor(Math.random() * 12),
+      sticker:
+        kind === 'watch'
+          ? 'Chrono Pin'
+          : kind === 'headphones'
+            ? 'Beat Badge'
+            : kind === 'drone'
+              ? 'Drone Wing'
+              : kind === 'camera'
+                ? 'Snap Pin'
+                : kind === 'console'
+                  ? 'Play Badge'
+                  : kind === 'speaker'
+                    ? 'Boom Badge'
+                    : 'Lucky Ring',
     }
   }
 
-  if (kind === 'car' || kind === 'doll' || rarity === 'epic') {
+  const toys = new Set<PrizeKind>(['car', 'doll', 'dino', 'unicorn', 'sneakers', 'cat', 'penguin', 'soccer'])
+  if (toys.has(kind) || rarity === 'epic') {
     return {
       title: 'Toy chest!',
       detail: `${label} spilled a fun pile of coins`,
       coins: 4 + Math.floor(Math.random() * 3),
-      score: 8 + Math.floor(Math.random() * 6),
-      sticker: kind === 'car' ? 'Race Sticker' : kind === 'doll' ? 'Doll Charm' : 'Epic Token',
+      score: 8 + Math.floor(Math.random() * 7),
+      sticker:
+        kind === 'car'
+          ? 'Race Sticker'
+          : kind === 'doll'
+            ? 'Doll Charm'
+            : kind === 'dino'
+              ? 'Dino Stamp'
+              : kind === 'unicorn'
+                ? 'Unicorn Charm'
+                : kind === 'sneakers'
+                  ? 'Kick Tag'
+                  : kind === 'cat'
+                    ? 'Kitty Pin'
+                    : kind === 'penguin'
+                      ? 'Penguin Pin'
+                      : kind === 'soccer'
+                        ? 'Goal Sticker'
+                        : 'Epic Token',
     }
   }
 
