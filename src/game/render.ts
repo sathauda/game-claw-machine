@@ -138,9 +138,28 @@ export function drawPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     case 'robot':
       drawRobot(ctx, p)
       break
+    case 'jackpot':
+      drawJackpot(ctx, p, time)
+      break
   }
 
   ctx.restore()
+}
+
+function drawJackpot(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  const r = p.radius
+  const glow = 0.45 + Math.sin(time * 6 + p.wobble) * 0.2
+  ctx.fillStyle = `rgba(255, 180, 70, ${glow})`
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 1.25, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.9, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  starPath(ctx, 0, 0, 5, r * 0.55, r * 0.24)
+  ctx.fill()
 }
 
 function drawBear(ctx: CanvasRenderingContext2D, p: Prize) {
@@ -333,6 +352,7 @@ export function drawHud(
   highScore: number,
   message: string,
   phase: string,
+  streak = 0,
 ) {
   const panelY = CABINET.glassBottom + 34
 
@@ -347,18 +367,23 @@ export function drawHud(
   ctx.textAlign = 'center'
   ctx.fillStyle = '#F4C15D'
   ctx.font = '700 13px Nunito, system-ui'
-  ctx.fillText(`BEST ${highScore}`, CABINET.width / 2, panelY + 28)
+  const mid = streak > 1 ? `STREAK x${streak}` : `BEST ${highScore}`
+  ctx.fillText(mid, CABINET.width / 2, panelY + 28)
 
   ctx.fillStyle = '#FFFFFF'
-  ctx.font = '800 16px Nunito, system-ui'
+  ctx.font = '800 15px Nunito, system-ui'
   ctx.fillText(message, CABINET.width / 2, panelY + 58)
 
   if (phase === 'attract' || phase === 'ready' || phase === 'result') {
     const pulse = 0.7 + Math.sin(performance.now() / 280) * 0.3
     ctx.globalAlpha = pulse
     ctx.fillStyle = '#7EC8C8'
-    ctx.font = '700 13px Nunito, system-ui'
-    ctx.fillText(phase === 'attract' ? 'PRESS PLAY TO START' : 'READY FOR NEXT DROP', CABINET.width / 2, panelY + 82)
+    ctx.font = '700 12px Nunito, system-ui'
+    ctx.fillText(
+      phase === 'attract' ? 'SKILL CLAW · LAND IT · KEEP IT' : 'OPEN PRIZES OR PLAY AGAIN',
+      CABINET.width / 2,
+      panelY + 82,
+    )
     ctx.globalAlpha = 1
   }
 }
@@ -423,6 +448,19 @@ function starPath(
   ctx.closePath()
 }
 
-export function prizeEmoji(_kind: PrizeKind): string {
-  return ''
+export function prizeIcon(kind: PrizeKind): string {
+  switch (kind) {
+    case 'bear':
+      return 'BEAR'
+    case 'star':
+      return 'STAR'
+    case 'duck':
+      return 'DUCK'
+    case 'heart':
+      return 'HEART'
+    case 'robot':
+      return 'BOT'
+    case 'jackpot':
+      return 'GOLD'
+  }
 }
