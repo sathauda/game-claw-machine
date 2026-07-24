@@ -99,11 +99,11 @@ export function rollMutation(rarity: Rarity, neonCabinet: boolean, kind: PrizeKi
     return 'none'
   }
 
-  // common / rare neon
-  if (r < chance(0.008)) return 'ogMut'
-  if (r < chance(0.008) + chance(0.03)) return 'mythicMut'
-  if (r < chance(0.008) + chance(0.03) + chance(0.1)) return 'overcharge'
-  if (r < chance(0.008) + chance(0.03) + chance(0.1) + chance(0.22)) return 'volt'
+  // common / rare neon — mutations show up, but mythic/OG mut stay scarce
+  if (r < chance(0.005)) return 'ogMut'
+  if (r < chance(0.005) + chance(0.018)) return 'mythicMut'
+  if (r < chance(0.005) + chance(0.018) + chance(0.08)) return 'overcharge'
+  if (r < chance(0.005) + chance(0.018) + chance(0.08) + chance(0.18)) return 'volt'
   return 'none'
 }
 
