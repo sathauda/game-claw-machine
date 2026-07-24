@@ -20,12 +20,15 @@ app.innerHTML = `
         <h1>Lucky Claw</h1>
       </div>
       <div class="stat-strip" aria-live="polite">
-        <div class="stat"><span>Coins</span><strong id="stat-coins">0</strong></div>
+        <div class="stat"><span>Credits</span><strong id="stat-coins">0</strong></div>
         <div class="stat"><span>Score</span><strong id="stat-score">0</strong></div>
         <div class="stat"><span>Best</span><strong id="stat-best">0</strong></div>
         <div class="stat"><span>Sealed</span><strong id="stat-sealed">0</strong></div>
       </div>
-      <button type="button" class="btn btn-tiny" id="btn-bag-toggle">BAG</button>
+      <div class="top-actions">
+        <button type="button" class="btn btn-tiny btn-credits" id="btn-credits">+10 CREDITS</button>
+        <button type="button" class="btn btn-tiny" id="btn-bag-toggle">BAG</button>
+      </div>
     </header>
 
     <section class="machine-rail" id="machine-rail" aria-label="Choose a claw machine"></section>
@@ -104,6 +107,7 @@ const machineBlurb = document.querySelector<HTMLElement>('#machine-blurb')!
 const bagDrawer = document.querySelector<HTMLElement>('#bag-drawer')!
 const bagToggle = document.querySelector<HTMLButtonElement>('#btn-bag-toggle')!
 const bagClose = document.querySelector<HTMLButtonElement>('#btn-bag-close')!
+const creditsBtn = document.querySelector<HTMLButtonElement>('#btn-credits')!
 const cabinetFrame = document.querySelector<HTMLElement>('.cabinet-frame')!
 
 function fitCanvas() {
@@ -262,6 +266,7 @@ machineRail.addEventListener('click', (e) => {
 
 bagToggle.addEventListener('click', () => bagDrawer.classList.add('open'))
 bagClose.addEventListener('click', () => bagDrawer.classList.remove('open'))
+creditsBtn.addEventListener('click', () => game.addCredits(10))
 
 bagGrid.addEventListener('click', (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>('[data-open]')

@@ -23,7 +23,8 @@ import {
 } from './types'
 
 const SAVE_KEY = 'lucky-claw-save-v4'
-const START_COINS = 50
+const START_COINS = 60
+const CREDIT_PACK = 10
 
 interface SaveData {
   coins: number
@@ -230,6 +231,16 @@ export class ClawGame {
 
   queuePlay() {
     this.playQueued = true
+  }
+
+  /** Add arcade credits (coins). */
+  addCredits(amount = CREDIT_PACK) {
+    const gain = Math.max(0, Math.floor(amount))
+    if (gain <= 0) return
+    this.coins += gain
+    this.message = `+${gain} credits added`
+    this.persist()
+    this.notify()
   }
 
   openBagPrize(id: string): OpenReward | null {

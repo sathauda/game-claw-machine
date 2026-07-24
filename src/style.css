@@ -270,13 +270,15 @@ html, body, #app {
 
 .btn-play:active:not(:disabled) { box-shadow: 0 3px 0 var(--teal-deep); }
 
-.btn-tiny {
-  min-height: 34px;
-  padding: 0 12px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  background: linear-gradient(180deg, #9ad9d6, var(--teal));
-  color: #103333;
+.top-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-credits {
+  background: linear-gradient(180deg, #ffe08a, var(--amber));
+  color: var(--ink);
 }
 
 .btn-muted {
@@ -524,11 +526,11 @@ button.capsule:hover { filter: brightness(1.05); transform: translateY(-1px); }
   .topbar {
     grid-template-columns: 1fr auto;
     grid-template-areas:
-      "brand bag"
+      "brand actions"
       "stats stats";
   }
   .brand-inline { grid-area: brand; }
-  #btn-bag-toggle { grid-area: bag; }
+  .top-actions { grid-area: actions; }
   .stat-strip {
     grid-area: stats;
     grid-template-columns: repeat(4, 1fr);
