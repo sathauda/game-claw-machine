@@ -1,4 +1,4 @@
-import { CABINET, type ClawState, type Particle, type Prize, type PrizeKind } from './types'
+import { CABINET, type ClawState, type MachineDef, type Particle, type Prize, type PrizeKind } from './types'
 
 export function drawCabinetBackground(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
   const g = ctx.createLinearGradient(0, 0, 0, h)
@@ -8,7 +8,6 @@ export function drawCabinetBackground(ctx: CanvasRenderingContext2D, w: number, 
   ctx.fillStyle = g
   ctx.fillRect(0, 0, w, h)
 
-  // Soft carnival lights
   for (let i = 0; i < 8; i++) {
     const x = 30 + i * ((w - 60) / 7)
     const pulse = 0.55 + Math.sin(time * 3 + i) * 0.25
@@ -19,25 +18,22 @@ export function drawCabinetBackground(ctx: CanvasRenderingContext2D, w: number, 
   }
 }
 
-export function drawCabinet(ctx: CanvasRenderingContext2D, time: number) {
+export function drawCabinet(ctx: CanvasRenderingContext2D, time: number, machine: MachineDef) {
   const { width: w, height: h, glassLeft, glassRight, glassTop, glassBottom } = CABINET
 
-  // Outer cabinet body
   roundRect(ctx, 8, 40, w - 16, h - 56, 28)
   const body = ctx.createLinearGradient(0, 40, w, h)
-  body.addColorStop(0, '#C62828')
-  body.addColorStop(0.5, '#A11818')
-  body.addColorStop(1, '#7A0F12')
+  body.addColorStop(0, machine.body[0])
+  body.addColorStop(0.5, machine.body[1])
+  body.addColorStop(1, machine.body[2])
   ctx.fillStyle = body
   ctx.fill()
 
-  // Side chrome trim
   ctx.strokeStyle = 'rgba(255,220,160,0.45)'
   ctx.lineWidth = 3
   roundRect(ctx, 14, 48, w - 28, h - 72, 22)
   ctx.stroke()
 
-  // Marquee panel
   roundRect(ctx, 28, 52, w - 56, 48, 12)
   const marquee = ctx.createLinearGradient(28, 52, 28, 100)
   marquee.addColorStop(0, '#F7E8C8')
@@ -45,21 +41,19 @@ export function drawCabinet(ctx: CanvasRenderingContext2D, time: number) {
   ctx.fillStyle = marquee
   ctx.fill()
 
-  ctx.fillStyle = '#C62828'
-  ctx.font = '32px "Lilita One", system-ui'
+  ctx.fillStyle = machine.marquee
+  ctx.font = '28px "Lilita One", system-ui'
   ctx.textAlign = 'center'
-  ctx.fillText('LUCKY CLAW', w / 2, 86)
+  ctx.fillText(machine.name.toUpperCase(), w / 2, 84)
 
-  // Glass window
   roundRect(ctx, glassLeft, glassTop, glassRight - glassLeft, glassBottom - glassTop, 10)
   const glass = ctx.createLinearGradient(0, glassTop, 0, glassBottom)
-  glass.addColorStop(0, '#9AD7D4')
-  glass.addColorStop(0.55, '#7EC8C8')
-  glass.addColorStop(1, '#5BA8A8')
+  glass.addColorStop(0, machine.glass[0])
+  glass.addColorStop(0.55, machine.glass[1])
+  glass.addColorStop(1, machine.glass[2])
   ctx.fillStyle = glass
   ctx.fill()
 
-  // Glass shine
   ctx.fillStyle = 'rgba(255,255,255,0.18)'
   ctx.beginPath()
   ctx.moveTo(glassLeft + 12, glassTop + 10)
@@ -69,19 +63,16 @@ export function drawCabinet(ctx: CanvasRenderingContext2D, time: number) {
   ctx.closePath()
   ctx.fill()
 
-  // Floor shelf
-  ctx.fillStyle = '#2F6B6B'
+  ctx.fillStyle = 'rgba(0,0,0,0.22)'
   ctx.fillRect(glassLeft, CABINET.floorY, glassRight - glassLeft, glassBottom - CABINET.floorY)
 
-  // Prize chute
-  ctx.fillStyle = '#1F4A4A'
+  ctx.fillStyle = 'rgba(0,0,0,0.35)'
   roundRect(ctx, CABINET.chuteX - 42, glassBottom - 8, 84, 18, 6)
   ctx.fill()
-  ctx.fillStyle = '#0D2A2A'
+  ctx.fillStyle = 'rgba(0,0,0,0.5)'
   roundRect(ctx, CABINET.chuteX - 30, glassBottom - 2, 60, 50, 8)
   ctx.fill()
 
-  // Control panel
   roundRect(ctx, 28, glassBottom + 18, w - 56, 120, 16)
   ctx.fillStyle = '#2B2B2B'
   ctx.fill()
@@ -89,7 +80,6 @@ export function drawCabinet(ctx: CanvasRenderingContext2D, time: number) {
   ctx.fillStyle = '#1A1A1A'
   ctx.fill()
 
-  // Decorative rivets
   ctx.fillStyle = '#F4C15D'
   for (const [x, y] of [
     [24, 120],
@@ -112,12 +102,9 @@ export function drawPrizes(ctx: CanvasRenderingContext2D, prizes: Prize[], time:
 }
 
 export function drawPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
-  const bob = Math.sin(time * 2.2 + p.wobble) * 1.5
-  const x = p.x
-  const y = p.y + bob
-
+  const bob = Math.sin(time * 2.2 + p.wobble) * 1.2
   ctx.save()
-  ctx.translate(x, y)
+  ctx.translate(p.x, p.y + bob)
   ctx.shadowColor = 'rgba(0,0,0,0.25)'
   ctx.shadowBlur = 8
   ctx.shadowOffsetY = 4
@@ -141,6 +128,24 @@ export function drawPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     case 'jackpot':
       drawJackpot(ctx, p, time)
       break
+    case 'car':
+      drawCar(ctx, p)
+      break
+    case 'doll':
+      drawDoll(ctx, p)
+      break
+    case 'phone':
+      drawPhone(ctx, p)
+      break
+    case 'watch':
+      drawWatch(ctx, p)
+      break
+    case 'headphones':
+      drawHeadphones(ctx, p)
+      break
+    case 'tablet':
+      drawTablet(ctx, p)
+      break
   }
 
   ctx.restore()
@@ -154,11 +159,119 @@ function drawJackpot(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
   ctx.arc(0, 0, r * 1.25, 0, Math.PI * 2)
   ctx.fill()
   ctx.fillStyle = p.color
-  ctx.beginPath()
-  ctx.arc(0, 0, r * 0.9, 0, Math.PI * 2)
+  roundRect(ctx, -r * 0.85, -r * 0.55, r * 1.7, r * 1.1, 4)
   ctx.fill()
   ctx.fillStyle = p.accent
-  starPath(ctx, 0, 0, 5, r * 0.55, r * 0.24)
+  ctx.font = `bold ${Math.floor(r * 0.7)}px Nunito, system-ui`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('GOLD', 0, 2)
+  ctx.textBaseline = 'alphabetic'
+}
+
+function drawCar(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.9, -r * 0.15, r * 1.8, r * 0.7, 6)
+  ctx.fill()
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.35, -r * 0.15)
+  ctx.lineTo(-r * 0.1, -r * 0.55)
+  ctx.lineTo(r * 0.45, -r * 0.55)
+  ctx.lineTo(r * 0.75, -r * 0.15)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = '#8FD3E8'
+  roundRect(ctx, -r * 0.05, -r * 0.48, r * 0.45, r * 0.28, 3)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.arc(-r * 0.55, r * 0.45, r * 0.22, 0, Math.PI * 2)
+  ctx.arc(r * 0.5, r * 0.45, r * 0.22, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawDoll(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = '#F6D7C3'
+  ctx.beginPath()
+  ctx.arc(0, -r * 0.35, r * 0.38, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.45, -r * 0.05, r * 0.9, r * 0.85, 10)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.arc(-r * 0.45, -r * 0.5, r * 0.2, 0, Math.PI * 2)
+  ctx.arc(r * 0.45, -r * 0.5, r * 0.2, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = '#2B2B2B'
+  ctx.beginPath()
+  ctx.arc(-5, -r * 0.38, 1.8, 0, Math.PI * 2)
+  ctx.arc(5, -r * 0.38, 1.8, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawPhone(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.55, -r * 0.95, r * 1.1, r * 1.9, 8)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  roundRect(ctx, -r * 0.4, -r * 0.75, r * 0.8, r * 1.4, 4)
+  ctx.fill()
+  ctx.fillStyle = '#F7E8C8'
+  ctx.beginPath()
+  ctx.arc(0, r * 0.78, 3, 0, Math.PI * 2)
+  ctx.fill()
+}
+
+function drawWatch(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.strokeStyle = p.accent
+  ctx.lineWidth = 5
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 1.1)
+  ctx.lineTo(0, -r * 0.55)
+  ctx.moveTo(0, r * 0.55)
+  ctx.lineTo(0, r * 1.1)
+  ctx.stroke()
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 0.7, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.strokeStyle = p.accent
+  ctx.lineWidth = 3
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(0, 0)
+  ctx.lineTo(0, -r * 0.4)
+  ctx.moveTo(0, 0)
+  ctx.lineTo(r * 0.28, r * 0.1)
+  ctx.stroke()
+}
+
+function drawHeadphones(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.strokeStyle = p.color
+  ctx.lineWidth = 5
+  ctx.beginPath()
+  ctx.arc(0, -r * 0.1, r * 0.75, Math.PI * 1.1, Math.PI * 1.9)
+  ctx.stroke()
+  ctx.fillStyle = p.accent
+  roundRect(ctx, -r * 0.95, -r * 0.15, r * 0.35, r * 0.7, 8)
+  ctx.fill()
+  roundRect(ctx, r * 0.6, -r * 0.15, r * 0.35, r * 0.7, 8)
+  ctx.fill()
+}
+
+function drawTablet(ctx: CanvasRenderingContext2D, p: Prize) {
+  const r = p.radius
+  ctx.fillStyle = p.color
+  roundRect(ctx, -r * 0.85, -r * 0.7, r * 1.7, r * 1.4, 8)
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  roundRect(ctx, -r * 0.7, -r * 0.55, r * 1.4, r * 1.0, 4)
   ctx.fill()
 }
 
@@ -168,7 +281,6 @@ function drawBear(ctx: CanvasRenderingContext2D, p: Prize) {
   ctx.beginPath()
   ctx.arc(0, 2, r * 0.78, 0, Math.PI * 2)
   ctx.fill()
-  // ears
   ctx.beginPath()
   ctx.arc(-r * 0.55, -r * 0.45, r * 0.28, 0, Math.PI * 2)
   ctx.arc(r * 0.55, -r * 0.45, r * 0.28, 0, Math.PI * 2)
@@ -178,7 +290,6 @@ function drawBear(ctx: CanvasRenderingContext2D, p: Prize) {
   ctx.arc(-r * 0.55, -r * 0.45, r * 0.12, 0, Math.PI * 2)
   ctx.arc(r * 0.55, -r * 0.45, r * 0.12, 0, Math.PI * 2)
   ctx.fill()
-  // face
   ctx.fillStyle = '#FFF5E6'
   ctx.beginPath()
   ctx.ellipse(0, 6, r * 0.42, r * 0.36, 0, 0, Math.PI * 2)
@@ -231,10 +342,6 @@ function drawHeart(ctx: CanvasRenderingContext2D, p: Prize) {
   ctx.bezierCurveTo(0, r * 0.55, r * 0.55, r * 0.25, r * 0.55, -r * 0.05)
   ctx.bezierCurveTo(r * 0.55, -r * 0.35, 0, r * 0.1, 0, r * 0.35)
   ctx.fill()
-  ctx.fillStyle = 'rgba(255,255,255,0.35)'
-  ctx.beginPath()
-  ctx.ellipse(-r * 0.22, -r * 0.05, r * 0.14, r * 0.1, -0.4, 0, Math.PI * 2)
-  ctx.fill()
 }
 
 function drawRobot(ctx: CanvasRenderingContext2D, p: Prize) {
@@ -250,22 +357,18 @@ function drawRobot(ctx: CanvasRenderingContext2D, p: Prize) {
   ctx.arc(-r * 0.2, -r * 0.12, 4, 0, Math.PI * 2)
   ctx.arc(r * 0.2, -r * 0.12, 4, 0, Math.PI * 2)
   ctx.fill()
-  ctx.strokeStyle = p.accent
-  ctx.lineWidth = 3
-  ctx.beginPath()
-  ctx.moveTo(0, -r * 0.55)
-  ctx.lineTo(0, -r * 0.85)
-  ctx.stroke()
-  ctx.fillStyle = '#E85D4C'
-  ctx.beginPath()
-  ctx.arc(0, -r * 0.9, 4, 0, Math.PI * 2)
-  ctx.fill()
 }
 
-export function drawClaw(ctx: CanvasRenderingContext2D, claw: ClawState, held: Prize | null, time: number) {
-  const { x, cableY, open } = claw
+export function drawClaw(
+  ctx: CanvasRenderingContext2D,
+  claw: ClawState,
+  held: Prize | null,
+  time: number,
+  swayX = 0,
+) {
+  const x = claw.x + swayX
+  const { cableY, open } = claw
 
-  // Rail
   ctx.strokeStyle = 'rgba(40,40,40,0.55)'
   ctx.lineWidth = 6
   ctx.beginPath()
@@ -273,7 +376,6 @@ export function drawClaw(ctx: CanvasRenderingContext2D, claw: ClawState, held: P
   ctx.lineTo(CABINET.glassRight - 8, CABINET.clawRestY - 8)
   ctx.stroke()
 
-  // Carriage
   ctx.fillStyle = '#3A3A3A'
   roundRect(ctx, x - 18, CABINET.clawRestY - 18, 36, 16, 4)
   ctx.fill()
@@ -281,7 +383,6 @@ export function drawClaw(ctx: CanvasRenderingContext2D, claw: ClawState, held: P
   roundRect(ctx, x - 10, CABINET.clawRestY - 14, 20, 8, 2)
   ctx.fill()
 
-  // Cable
   ctx.strokeStyle = '#2B2B2B'
   ctx.lineWidth = 3
   ctx.beginPath()
@@ -289,7 +390,6 @@ export function drawClaw(ctx: CanvasRenderingContext2D, claw: ClawState, held: P
   ctx.lineTo(x, cableY - 8)
   ctx.stroke()
 
-  // Claw body
   ctx.fillStyle = '#D8D8D8'
   ctx.beginPath()
   ctx.arc(x, cableY, 12, 0, Math.PI * 2)
@@ -301,7 +401,6 @@ export function drawClaw(ctx: CanvasRenderingContext2D, claw: ClawState, held: P
 
   const spread = 10 + open * 22
   const tipY = cableY + 28 + (1 - open) * 6
-
   drawClawArm(ctx, x, cableY, -spread, tipY, open)
   drawClawArm(ctx, x, cableY, spread, tipY, open)
 
@@ -326,7 +425,6 @@ function drawClawArm(
   ctx.moveTo(x, y + 6)
   ctx.quadraticCurveTo(x + tipXOffset * 0.55, y + 18, x + tipXOffset, tipY)
   ctx.stroke()
-
   ctx.fillStyle = '#E8E8E8'
   ctx.beginPath()
   ctx.arc(x + tipXOffset, tipY, 5 + (1 - open), 0, Math.PI * 2)
@@ -353,6 +451,7 @@ export function drawHud(
   message: string,
   phase: string,
   streak = 0,
+  cost = 1,
 ) {
   const panelY = CABINET.glassBottom + 34
 
@@ -371,7 +470,7 @@ export function drawHud(
   ctx.fillText(mid, CABINET.width / 2, panelY + 28)
 
   ctx.fillStyle = '#FFFFFF'
-  ctx.font = '800 15px Nunito, system-ui'
+  ctx.font = '800 14px Nunito, system-ui'
   ctx.fillText(message, CABINET.width / 2, panelY + 58)
 
   if (phase === 'attract' || phase === 'ready' || phase === 'result') {
@@ -380,7 +479,7 @@ export function drawHud(
     ctx.fillStyle = '#7EC8C8'
     ctx.font = '700 12px Nunito, system-ui'
     ctx.fillText(
-      phase === 'attract' ? 'SKILL CLAW · LAND IT · KEEP IT' : 'OPEN PRIZES OR PLAY AGAIN',
+      phase === 'attract' ? `PLAY COSTS ${cost} COINS · AIM TIGHT` : 'OPEN PRIZES OR PLAY AGAIN',
       CABINET.width / 2,
       panelY + 82,
     )
@@ -401,12 +500,12 @@ export function drawOverlayMessage(ctx: CanvasRenderingContext2D, title: string,
   ctx.fill()
 
   ctx.fillStyle = '#F7E8C8'
-  ctx.font = '36px "Lilita One", system-ui'
+  ctx.font = '32px "Lilita One", system-ui'
   ctx.textAlign = 'center'
   ctx.fillText(title, CABINET.width / 2, CABINET.glassTop + 95)
 
   ctx.fillStyle = '#FFFFFF'
-  ctx.font = '700 15px Nunito, system-ui'
+  ctx.font = '700 14px Nunito, system-ui'
   ctx.fillText(subtitle, CABINET.width / 2, CABINET.glassTop + 128)
 }
 
@@ -462,5 +561,17 @@ export function prizeIcon(kind: PrizeKind): string {
       return 'BOT'
     case 'jackpot':
       return 'GOLD'
+    case 'car':
+      return 'CAR'
+    case 'doll':
+      return 'DOLL'
+    case 'phone':
+      return 'PHONE'
+    case 'watch':
+      return 'WATCH'
+    case 'headphones':
+      return 'AUDIO'
+    case 'tablet':
+      return 'TAB'
   }
 }

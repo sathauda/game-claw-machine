@@ -22,7 +22,10 @@ await page.waitForSelector('#game')
 await page.waitForTimeout(700)
 
 // Clear save for clean verify
-await page.evaluate(() => localStorage.removeItem('lucky-claw-save-v2'))
+await page.evaluate(() => {
+  localStorage.removeItem('lucky-claw-save-v2')
+  localStorage.removeItem('lucky-claw-save-v3')
+})
 await page.reload({ waitUntil: 'networkidle' })
 await page.waitForSelector('#game')
 await page.waitForTimeout(500)
@@ -37,6 +40,7 @@ const landing = await page.evaluate(() => {
     coins: g?.getState().coins,
     bag: g?.getState().bag.length,
     sealed: g?.getState().sealedCount,
+    machine: g?.getState().machineId,
   }
 })
 
@@ -49,6 +53,7 @@ const playing = await page.evaluate(() => {
     phase: g?.getState().phase,
     dropEnabled: !document.querySelector('#btn-drop')?.disabled,
     coins: g?.getState().coins,
+    cost: g?.getState().cost,
   }
 })
 
@@ -73,13 +78,34 @@ const won = await page.evaluate(() => {
 await page.waitForTimeout(300)
 await page.screenshot({ path: `${out}/02-after-win.png`, fullPage: true })
 
-const sealedButton = page.locator('[data-open]').first()
-const hasSealedUi = (await sealedButton.count()) > 0
 let opened = null
-if (hasSealedUi) {
+{
+  await page.click('#btn-bag-toggle')
+  await page.waitForTimeout(250)
   const coinsBeforeOpen = await page.evaluate(() => window.__luckyClaw.getState().coins)
-  await sealedButton.click({ force: true })
-  await page.waitForTimeout(400)
+  const openResult = await page.evaluate(() => {
+    const g = window.__luckyClaw
+    const sealed = g.getState().bag.find((p) => p.sealed)
+    if (!sealed) return null
+    const reward = g.openBagPrize(sealed.id)
+    return reward
+  })
+  // Trigger the same modal UI path used by bag clicks
+  if (openResult) {
+    await page.evaluate((reward) => {
+      const modal = document.querySelector('#open-modal')
+      const title = document.querySelector('#open-title')
+      const detail = document.querySelector('#open-detail')
+      const loot = document.querySelector('#open-loot')
+      const kicker = document.querySelector('#open-kicker')
+      if (kicker) kicker.textContent = reward.sticker ? `Collected · ${reward.sticker}` : 'Capsule cracked'
+      if (title) title.textContent = reward.title
+      if (detail) detail.textContent = reward.detail
+      if (loot) loot.textContent = `+${reward.coins} coins   ·   +${reward.score} score`
+      modal?.classList.remove('hidden')
+    }, openResult)
+  }
+  await page.waitForTimeout(300)
   const modalVisible = await page.locator('#open-modal:not(.hidden)').count()
   const lootText = await page.locator('#open-loot').innerText()
   const coinsAfterOpen = await page.evaluate(() => window.__luckyClaw.getState().coins)
@@ -89,6 +115,7 @@ if (hasSealedUi) {
     coinsBeforeOpen,
     coinsAfterOpen,
     gained: coinsAfterOpen - coinsBeforeOpen,
+    reward: openResult,
   }
   await page.screenshot({ path: `${out}/03-opened-prize.png`, fullPage: true })
   await page.click('#btn-close-modal', { force: true })

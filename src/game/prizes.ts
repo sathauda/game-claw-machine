@@ -1,17 +1,31 @@
-import { CABINET, PRIZE_DEFS, FAIR_CLAW, type OpenReward, type Prize, type PrizeDef, type PrizeKind, type Rarity } from './types'
+import {
+  CABINET,
+  getPrizeDef,
+  type MachineDef,
+  type OpenReward,
+  type Prize,
+  type PrizeDef,
+  type PrizeKind,
+  type Rarity,
+} from './types'
+
+const FAIR_CLAW_BASE = {
+  verticalReach: 16,
+} as const
 
 let nextId = 1
 
 const WEIGHTS: Record<Rarity, number> = {
-  common: 42,
+  common: 38,
   rare: 28,
-  epic: 18,
-  legend: 8,
+  epic: 20,
+  legend: 10,
 }
 
-function pickDef(): PrizeDef {
-  const pool = PRIZE_DEFS.flatMap((d) => Array(WEIGHTS[d.rarity]).fill(d)) as PrizeDef[]
-  return pool[Math.floor(Math.random() * pool.length)]
+function pickDef(pool: PrizeKind[]): PrizeDef {
+  const defs = pool.map(getPrizeDef)
+  const weighted = defs.flatMap((d) => Array(WEIGHTS[d.rarity]).fill(d)) as PrizeDef[]
+  return weighted[Math.floor(Math.random() * weighted.length)]
 }
 
 export function createPrizeFromDef(def: PrizeDef, x: number, y: number): Prize {
@@ -32,37 +46,38 @@ export function createPrizeFromDef(def: PrizeDef, x: number, y: number): Prize {
   }
 }
 
-export function createPrizePile(count = 9): Prize[] {
+export function createPrizePile(machine: MachineDef, count = 10): Prize[] {
   const prizes: Prize[] = []
-  const left = CABINET.glassLeft + 30
-  const right = CABINET.glassRight - 30
-  const baseY = CABINET.floorY - 8
+  const left = CABINET.glassLeft + 28
+  const right = CABINET.glassRight - 28
+  const baseY = CABINET.floorY - 6
+  const cols = 5
 
   for (let i = 0; i < count; i++) {
-    const def = pickDef()
-    const col = i % 4
-    const row = Math.floor(i / 4)
-    const x = left + ((right - left) / 3) * col + (Math.random() - 0.5) * 16
-    const y = baseY - row * 44 - Math.random() * 8
+    const def = pickDef(machine.prizeKinds)
+    const col = i % cols
+    const row = Math.floor(i / cols)
+    const x = left + ((right - left) / (cols - 1)) * col + (Math.random() - 0.5) * 10
+    const y = baseY - row * 38 - Math.random() * 6
     prizes.push(createPrizeFromDef(def, x, y))
   }
 
   return settlePrizes(prizes)
 }
 
-export function refillPrizes(existing: Prize[], minCount = 7): Prize[] {
+export function refillPrizes(machine: MachineDef, existing: Prize[], minCount = 8): Prize[] {
   const live = existing.filter((p) => !p.grabbed)
   if (live.length >= minCount) return live
   const needed = minCount + Math.floor(Math.random() * 2) - live.length
-  return settlePrizes([...live, ...createPrizePile(Math.max(needed, 2))])
+  return settlePrizes([...live, ...createPrizePile(machine, Math.max(needed, 2))])
 }
 
 export function settlePrizes(prizes: Prize[]): Prize[] {
-  const left = CABINET.glassLeft + 24
-  const right = CABINET.glassRight - 24
+  const left = CABINET.glassLeft + 22
+  const right = CABINET.glassRight - 22
   const floor = CABINET.floorY
 
-  for (let pass = 0; pass < 8; pass++) {
+  for (let pass = 0; pass < 10; pass++) {
     for (const p of prizes) {
       if (p.grabbed) continue
       p.y = Math.min(p.y, floor - p.radius)
@@ -77,15 +92,15 @@ export function settlePrizes(prizes: Prize[]): Prize[] {
         const dx = b.x - a.x
         const dy = b.y - a.y
         const dist = Math.hypot(dx, dy) || 1
-        const min = a.radius + b.radius - 6
+        const min = a.radius + b.radius - 4
         if (dist < min) {
           const push = (min - dist) / 2
           const nx = dx / dist
           const ny = dy / dist
           a.x -= nx * push
-          a.y -= ny * push * 0.4
+          a.y -= ny * push * 0.45
           b.x += nx * push
-          b.y += ny * push * 0.4
+          b.y += ny * push * 0.45
         }
       }
     }
@@ -101,8 +116,14 @@ export interface GrabProbe {
   perfect: boolean
 }
 
-/** Skill check only — no hidden fail chance. */
-export function probeGrab(prizes: Prize[], clawX: number, clawY: number): GrabProbe {
+/** Skill check only — hit the smaller zone and you keep it. No fake fails. */
+export function probeGrab(
+  prizes: Prize[],
+  clawX: number,
+  clawY: number,
+  hitPadding: number,
+  perfectAlign: number,
+): GrabProbe {
   let best: Prize | null = null
   let bestAlign = 0
   let bestScore = -Infinity
@@ -111,12 +132,12 @@ export function probeGrab(prizes: Prize[], clawX: number, clawY: number): GrabPr
     if (p.grabbed) continue
     const dx = Math.abs(p.x - clawX)
     const dy = p.y - clawY
-    const maxDx = p.radius + FAIR_CLAW.hitPadding
+    const maxDx = Math.max(6, p.radius * 0.72 + hitPadding)
     if (dx > maxDx) continue
-    if (dy < -FAIR_CLAW.verticalReach || dy > p.radius + 24) continue
+    if (dy < -FAIR_CLAW_BASE.verticalReach || dy > p.radius + 20) continue
 
     const align = 1 - dx / maxDx
-    const score = align * 2 - Math.abs(dy) * 0.01
+    const score = align * 2 - Math.abs(dy) * 0.012
     if (score > bestScore) {
       bestScore = score
       best = p
@@ -126,41 +147,41 @@ export function probeGrab(prizes: Prize[], clawX: number, clawY: number): GrabPr
 
   if (!best) return { prize: null, align: 0, hit: false, perfect: false }
 
-  const perfect = Math.abs(best.x - clawX) <= best.radius * FAIR_CLAW.perfectAlign
+  const perfect = Math.abs(best.x - clawX) <= best.radius * perfectAlign
   return { prize: best, align: bestAlign, hit: true, perfect }
 }
 
 export function openPrizeReward(kind: PrizeKind, rarity: Rarity, label: string): OpenReward {
   const roll = Math.random()
 
-  if (kind === 'jackpot' || rarity === 'legend') {
-    const coins = 8 + Math.floor(Math.random() * 5)
-    const score = 20 + Math.floor(Math.random() * 15)
+  if (kind === 'phone' || kind === 'tablet' || kind === 'jackpot') {
+    const coins = 10 + Math.floor(Math.random() * 8)
     return {
-      title: 'JACKPOT!',
-      detail: `${label} burst open with arcade gold`,
+      title: kind === 'jackpot' ? 'GOLD HAUL!' : 'TECH UNLOCKED!',
+      detail: `${label} cracked open with premium loot`,
       coins,
-      score,
-      sticker: 'Legend Seal',
+      score: 24 + Math.floor(Math.random() * 20),
+      sticker: kind === 'phone' ? 'Phone Badge' : kind === 'tablet' ? 'Tablet Seal' : 'Gold Brick Seal',
     }
   }
 
-  if (rarity === 'epic') {
-    if (roll < 0.35) {
-      return {
-        title: 'Epic haul',
-        detail: `${label} held a fat coin stack`,
-        coins: 5 + Math.floor(Math.random() * 3),
-        score: 10,
-        sticker: 'Tin Badge',
-      }
-    }
+  if (kind === 'watch' || kind === 'headphones') {
     return {
-      title: 'Machine bonus',
-      detail: `${label} paid out tickets`,
-      coins: 4,
-      score: 14 + Math.floor(Math.random() * 8),
-      sticker: 'Arcade Ticket',
+      title: 'Gadget score!',
+      detail: `${label} paid out arcade credits`,
+      coins: 6 + Math.floor(Math.random() * 4),
+      score: 14 + Math.floor(Math.random() * 10),
+      sticker: kind === 'watch' ? 'Chrono Pin' : 'Beat Badge',
+    }
+  }
+
+  if (kind === 'car' || kind === 'doll' || rarity === 'epic') {
+    return {
+      title: 'Toy chest!',
+      detail: `${label} spilled a fun pile of coins`,
+      coins: 4 + Math.floor(Math.random() * 3),
+      score: 8 + Math.floor(Math.random() * 6),
+      sticker: kind === 'car' ? 'Race Sticker' : kind === 'doll' ? 'Doll Charm' : 'Epic Token',
     }
   }
 
@@ -169,18 +190,17 @@ export function openPrizeReward(kind: PrizeKind, rarity: Rarity, label: string):
       title: 'Nice open!',
       detail: `${label} had a sweet surprise`,
       coins: 3 + Math.floor(Math.random() * 2),
-      score: 6 + Math.floor(Math.random() * 5),
+      score: 5 + Math.floor(Math.random() * 4),
       sticker: roll < 0.5 ? 'Star Charm' : 'Candy Pin',
     }
   }
 
-  // common — still generous so play stays fun
   return {
     title: 'Prize opened!',
     detail: `${label} spilled some coins`,
     coins: 2 + Math.floor(Math.random() * 2),
     score: 3 + Math.floor(Math.random() * 3),
-    sticker: roll < 0.4 ? 'Duck Sticker' : undefined,
+    sticker: roll < 0.35 ? 'Duck Sticker' : undefined,
   }
 }
 

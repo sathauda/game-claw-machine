@@ -10,17 +10,20 @@ import {
 } from './render'
 import {
   CABINET,
+  MACHINES,
+  getMachine,
   type BagPrize,
   type ClawState,
   type GamePhase,
+  type MachineDef,
+  type MachineId,
   type OpenReward,
   type Particle,
   type Prize,
 } from './types'
 
-const SAVE_KEY = 'lucky-claw-save-v2'
-const START_COINS = 15
-const PLAY_COST = 1
+const SAVE_KEY = 'lucky-claw-save-v3'
+const START_COINS = 40
 
 interface SaveData {
   coins: number
@@ -29,6 +32,7 @@ interface SaveData {
   bag: BagPrize[]
   stickers: string[]
   wins: number
+  machineId: MachineId
 }
 
 function loadSave(): SaveData {
@@ -36,6 +40,7 @@ function loadSave(): SaveData {
     const raw = localStorage.getItem(SAVE_KEY)
     if (!raw) return defaultSave()
     const data = JSON.parse(raw) as SaveData
+    const machineId = MACHINES.some((m) => m.id === data.machineId) ? data.machineId : 'toybox'
     return {
       coins: Number(data.coins) || START_COINS,
       score: Number(data.score) || 0,
@@ -43,6 +48,7 @@ function loadSave(): SaveData {
       bag: Array.isArray(data.bag) ? data.bag : [],
       stickers: Array.isArray(data.stickers) ? data.stickers : [],
       wins: Number(data.wins) || 0,
+      machineId,
     }
   } catch {
     return defaultSave()
@@ -50,13 +56,22 @@ function loadSave(): SaveData {
 }
 
 function defaultSave(): SaveData {
-  return { coins: START_COINS, score: 0, highScore: 0, bag: [], stickers: [], wins: 0 }
+  return {
+    coins: START_COINS,
+    score: 0,
+    highScore: 0,
+    bag: [],
+    stickers: [],
+    wins: 0,
+    machineId: 'toybox',
+  }
 }
 
 export class ClawGame {
   private canvas: HTMLCanvasElement
   private ctx: CanvasRenderingContext2D
   private phase: GamePhase = 'attract'
+  private machine: MachineDef
   private claw: ClawState = {
     x: CABINET.width / 2,
     cableY: CABINET.clawRestY,
@@ -64,7 +79,7 @@ export class ClawGame {
     targetX: CABINET.width / 2,
     grip: 1,
   }
-  private prizes: Prize[] = createPrizePile(9)
+  private prizes: Prize[]
   private held: Prize | null = null
   private particles: Particle[] = []
   private coins: number
@@ -74,7 +89,7 @@ export class ClawGame {
   private stickers: string[]
   private wins: number
   private streak = 0
-  private message = 'Arcade claw — aim true, keep your prize'
+  private message = 'Pick a machine · aim tight · keep what you hit'
   private lastResult = ''
   private lastOpen: OpenReward | null = null
   private keys = new Set<string>()
@@ -86,6 +101,8 @@ export class ClawGame {
   private releaseTimer = 0
   private lastTs = 0
   private running = false
+  private swayPhase = 0
+  private displaySway = 0
   private onState?: () => void
 
   constructor(canvas: HTMLCanvasElement) {
@@ -100,6 +117,8 @@ export class ClawGame {
     this.bag = save.bag
     this.stickers = save.stickers
     this.wins = save.wins
+    this.machine = getMachine(save.machineId)
+    this.prizes = createPrizePile(this.machine, 11)
     this.resize()
   }
 
@@ -109,6 +128,7 @@ export class ClawGame {
 
   getState() {
     const sealedCount = this.bag.filter((p) => p.sealed).length
+    const cost = this.machine.cost
     return {
       phase: this.phase,
       coins: this.coins,
@@ -121,12 +141,37 @@ export class ClawGame {
       stickers: this.stickers,
       sealedCount,
       lastOpen: this.lastOpen,
+      machineId: this.machine.id,
+      machine: this.machine,
+      machines: MACHINES,
+      cost,
       canPlay:
-        this.coins >= PLAY_COST &&
+        this.coins >= cost &&
         (this.phase === 'attract' || this.phase === 'ready' || this.phase === 'result'),
       canMove: this.phase === 'moving',
       canDrop: this.phase === 'moving',
+      canSwitchMachine: this.phase === 'attract' || this.phase === 'ready' || this.phase === 'result',
     }
+  }
+
+  setMachine(id: MachineId) {
+    if (!(this.phase === 'attract' || this.phase === 'ready' || this.phase === 'result')) return
+    if (this.machine.id === id) return
+    this.machine = getMachine(id)
+    this.prizes = createPrizePile(this.machine, 11)
+    this.held = null
+    this.streak = 0
+    this.claw = {
+      x: CABINET.width / 2,
+      cableY: CABINET.clawRestY,
+      open: 1,
+      targetX: CABINET.width / 2,
+      grip: 1,
+    }
+    this.phase = 'attract'
+    this.message = `${this.machine.name} · ${this.machine.cost} coins · ${this.machine.difficulty}`
+    this.persist()
+    this.notify()
   }
 
   start() {
@@ -153,8 +198,6 @@ export class ClawGame {
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
     this.canvas.width = CABINET.width * dpr
     this.canvas.height = CABINET.height * dpr
-    this.canvas.style.width = `${CABINET.width}px`
-    this.canvas.style.height = `${CABINET.height}px`
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   }
 
@@ -170,7 +213,6 @@ export class ClawGame {
     this.playQueued = true
   }
 
-  /** Open a sealed bag prize — real rewards, no empty scam. */
   openBagPrize(id: string): OpenReward | null {
     const item = this.bag.find((p) => p.id === id && p.sealed)
     if (!item) return null
@@ -202,10 +244,9 @@ export class ClawGame {
     this.notify()
   }
 
-  /** Test helper: fair-win the nearest/first prize into the bag immediately. */
   forceFairWin(): BagPrize | null {
     if (this.phase === 'attract' || this.phase === 'ready' || this.phase === 'result') {
-      if (this.coins < PLAY_COST) this.coins = START_COINS
+      if (this.coins < this.machine.cost) this.coins = Math.max(this.coins, this.machine.cost + 5)
       this.tryStartRound()
     }
 
@@ -236,6 +277,10 @@ export class ClawGame {
       if (this.phase === 'moving') this.queueDrop()
       else this.queuePlay()
     }
+    if (key >= '1' && key <= '4') {
+      const machine = MACHINES[Number(key) - 1]
+      if (machine) this.setMachine(machine.id)
+    }
   }
 
   onKeyUp = (e: KeyboardEvent) => {
@@ -254,12 +299,22 @@ export class ClawGame {
       bag: this.bag,
       stickers: this.stickers,
       wins: this.wins,
+      machineId: this.machine.id,
     }
     localStorage.setItem(SAVE_KEY, JSON.stringify(data))
   }
 
+  private grabX() {
+    return this.claw.x + this.displaySway
+  }
+
   private update(dt: number) {
     this.updateParticles(dt)
+    this.swayPhase += dt * (2.2 + this.machine.sway * 0.08)
+    this.displaySway =
+      this.phase === 'moving' || this.phase === 'dropping'
+        ? Math.sin(this.swayPhase) * this.machine.sway
+        : this.displaySway * 0.9
 
     if (this.playQueued) {
       this.playQueued = false
@@ -279,42 +334,51 @@ export class ClawGame {
         this.claw.x = clamp(this.claw.x, CABINET.clawMinX, CABINET.clawMaxX)
         break
       case 'moving': {
-        this.claw.x = clamp(this.claw.x + dir * 190 * dt, CABINET.clawMinX, CABINET.clawMaxX)
+        this.claw.x = clamp(
+          this.claw.x + dir * this.machine.clawSpeed * dt,
+          CABINET.clawMinX,
+          CABINET.clawMaxX,
+        )
         this.claw.open = 1
         if (this.dropQueued) {
           this.dropQueued = false
           this.phase = 'dropping'
-          this.message = 'Claw dropping…'
+          this.message = 'Hold steady…'
           this.notify()
         }
         break
       }
       case 'dropping': {
-        this.claw.cableY += 280 * dt
+        this.claw.cableY += this.machine.dropSpeed * dt
         this.claw.open = 1
-        const probe = probeGrab(this.prizes, this.claw.x, this.claw.cableY + 28)
+        const probe = probeGrab(
+          this.prizes,
+          this.grabX(),
+          this.claw.cableY + 28,
+          this.machine.hitPadding,
+          this.machine.perfectAlign,
+        )
         const reachedFloor = this.claw.cableY >= CABINET.clawMaxY
         const reachedPrize =
           probe.hit &&
           probe.prize &&
-          this.claw.cableY + 28 >= probe.prize.y - probe.prize.radius * 0.15
+          this.claw.cableY + 28 >= probe.prize.y - probe.prize.radius * 0.12
         if (reachedFloor || reachedPrize) {
           this.phase = 'grabbing'
-          this.grabTimer = 0.38
-          this.message = probe.hit ? 'Locking on…' : 'No prize under claw'
+          this.grabTimer = 0.34
+          this.message = probe.hit ? 'Locking…' : 'Missed the pocket'
           this.notify()
         }
         break
       }
       case 'grabbing': {
         this.grabTimer -= dt
-        this.claw.open = Math.max(0.08, this.grabTimer / 0.38)
+        this.claw.open = Math.max(0.08, this.grabTimer / 0.34)
         if (this.grabTimer <= 0) this.resolveGrab()
         break
       }
       case 'lifting': {
-        // Fair claw: once grabbed, it stays grabbed. No mid-lift scam slip.
-        this.claw.cableY -= 230 * dt
+        this.claw.cableY -= 240 * dt
         if (this.claw.cableY <= CABINET.clawRestY) {
           this.claw.cableY = CABINET.clawRestY
           this.phase = 'carrying'
@@ -326,7 +390,7 @@ export class ClawGame {
       }
       case 'carrying': {
         const dx = this.claw.targetX - this.claw.x
-        const step = Math.sign(dx) * Math.min(Math.abs(dx), 220 * dt)
+        const step = Math.sign(dx) * Math.min(Math.abs(dx), 230 * dt)
         this.claw.x += step
         if (Math.abs(this.claw.x - this.claw.targetX) < 2) {
           this.claw.x = this.claw.targetX
@@ -359,16 +423,19 @@ export class ClawGame {
 
   private tryStartRound() {
     if (!(this.phase === 'attract' || this.phase === 'ready' || this.phase === 'result')) return
-    if (this.coins < PLAY_COST) {
-      this.message = 'Out of coins — open prizes for more!'
+    const cost = this.machine.cost
+    if (this.coins < cost) {
+      this.message = `Need ${cost} coins — open prizes or pick a cheaper machine`
       this.notify()
       return
     }
 
-    this.coins -= PLAY_COST
-    this.prizes = refillPrizes(this.prizes, 7)
+    this.coins -= cost
+    this.prizes = refillPrizes(this.machine, this.prizes, 9)
     this.held = null
     this.lastOpen = null
+    this.displaySway = 0
+    this.swayPhase = Math.random() * Math.PI * 2
     this.claw = {
       x: CABINET.width / 2,
       cableY: CABINET.clawRestY,
@@ -377,21 +444,26 @@ export class ClawGame {
       grip: 1,
     }
     this.phase = 'moving'
-    this.message = 'Line up · DROP · you keep what you hit'
+    this.message = `${this.machine.name}: center the claw — sway is real`
     this.lastResult = ''
     this.persist()
     this.notify()
   }
 
   private resolveGrab() {
-    const probe = probeGrab(this.prizes, this.claw.x, this.claw.cableY + 28)
+    const probe = probeGrab(
+      this.prizes,
+      this.grabX(),
+      this.claw.cableY + 28,
+      this.machine.hitPadding,
+      this.machine.perfectAlign,
+    )
 
-    // Skill only: if the claw is on a prize, you get it. Always.
     if (!probe.hit || !probe.prize) {
       this.claw.grip = 0
       this.held = null
       this.phase = 'lifting'
-      this.message = 'Missed — try a tighter aim'
+      this.message = 'Missed — tighter center next time'
       this.notify()
       return
     }
@@ -403,7 +475,7 @@ export class ClawGame {
     this.claw.grip = 1
     this.claw.open = 0.1
     this.spawnBurst(target.x, target.y, target.color)
-    this.message = probe.perfect ? 'Perfect grab!' : 'Got it — fair and square'
+    this.message = probe.perfect ? 'Perfect grab!' : 'Got it — fair lock'
     this.phase = 'lifting'
     this.notify()
   }
@@ -411,8 +483,9 @@ export class ClawGame {
   private winPrize(prize: Prize) {
     this.streak += 1
     this.wins += 1
-    const streakBonus = this.streak > 1 ? this.streak : 0
-    this.score += prize.value + streakBonus
+    const streakBonus = this.streak > 1 ? this.streak * 2 : 0
+    const machineBonus = Math.max(0, this.machine.cost - 1)
+    this.score += prize.value + streakBonus + machineBonus
 
     const bagItem: BagPrize = {
       id: `${prize.kind}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -429,9 +502,7 @@ export class ClawGame {
 
     if (this.score > this.highScore) this.highScore = this.score
     this.spawnBurst(CABINET.chuteX, CABINET.glassBottom - 20, prize.color)
-    this.lastResult = streakBonus
-      ? `${prize.label} sealed! Streak x${this.streak}`
-      : `${prize.label} sealed — open it!`
+    this.lastResult = `${prize.label} sealed — open it!`
     this.message = this.lastResult
     this.persist()
   }
@@ -442,9 +513,9 @@ export class ClawGame {
     this.phase = 'result'
     if (!this.lastResult) {
       this.message =
-        this.coins > 0
-          ? 'Missed that one — skill retry ready'
-          : 'No coins left — open sealed prizes'
+        this.coins >= this.machine.cost
+          ? 'Challenge miss — try again'
+          : 'Low coins — open bags or switch machine'
     }
     this.persist()
     this.notify()
@@ -478,17 +549,26 @@ export class ClawGame {
   }
 
   private draw(time: number) {
-    const { ctx, canvas } = this
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    const { ctx } = this
+    ctx.clearRect(0, 0, CABINET.width, CABINET.height)
     drawCabinetBackground(ctx, CABINET.width, CABINET.height, time)
-    drawCabinet(ctx, time)
+    drawCabinet(ctx, time, this.machine)
     drawPrizes(ctx, this.prizes, time)
-    drawClaw(ctx, this.claw, this.held, time)
+    drawClaw(ctx, this.claw, this.held, time, this.displaySway)
     drawParticles(ctx, this.particles)
-    drawHud(ctx, this.coins, this.score, this.highScore, this.message, this.phase, this.streak)
+    drawHud(
+      ctx,
+      this.coins,
+      this.score,
+      this.highScore,
+      this.message,
+      this.phase,
+      this.streak,
+      this.machine.cost,
+    )
 
     if (this.phase === 'attract') {
-      drawOverlayMessage(ctx, 'LUCKY CLAW', 'Fair arcade claw · open real prizes')
+      drawOverlayMessage(ctx, this.machine.name.toUpperCase(), `${this.machine.blurb} · fair skill claw`)
     }
   }
 }

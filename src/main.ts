@@ -2,7 +2,7 @@ import './style.css'
 import { ClawGame } from './game/Game'
 import { rarityLabel } from './game/prizes'
 import { prizeIcon } from './game/render'
-import type { BagPrize, OpenReward } from './game/types'
+import type { BagPrize, MachineDef, OpenReward } from './game/types'
 
 declare global {
   interface Window {
@@ -13,67 +13,55 @@ declare global {
 const app = document.querySelector<HTMLDivElement>('#app')!
 
 app.innerHTML = `
-  <div class="parlor">
-    <div class="parlor-glow parlor-glow-a" aria-hidden="true"></div>
-    <div class="parlor-glow parlor-glow-b" aria-hidden="true"></div>
-    <div class="floor-grid" aria-hidden="true"></div>
-
-    <div class="shell">
-      <header class="brand">
-        <div class="marquee" aria-hidden="true">
-          ${Array.from({ length: 14 }, (_, i) => `<span style="--i:${i}"></span>`).join('')}
-        </div>
-        <p class="eyebrow">Skill arcade · fair claw</p>
+  <div class="arcade" id="arcade">
+    <header class="topbar">
+      <div class="brand-inline">
+        <p class="eyebrow">Lucky Claw Arcade</p>
         <h1>Lucky Claw</h1>
-        <p class="tagline">Drop the claw. Keep what you hit. Open real prizes.</p>
-        <div class="stat-strip" id="stat-strip" aria-live="polite">
-          <div class="stat"><span>Coins</span><strong id="stat-coins">0</strong></div>
-          <div class="stat"><span>Score</span><strong id="stat-score">0</strong></div>
-          <div class="stat"><span>Best</span><strong id="stat-best">0</strong></div>
-          <div class="stat"><span>Sealed</span><strong id="stat-sealed">0</strong></div>
-        </div>
-      </header>
+      </div>
+      <div class="stat-strip" aria-live="polite">
+        <div class="stat"><span>Coins</span><strong id="stat-coins">0</strong></div>
+        <div class="stat"><span>Score</span><strong id="stat-score">0</strong></div>
+        <div class="stat"><span>Best</span><strong id="stat-best">0</strong></div>
+        <div class="stat"><span>Sealed</span><strong id="stat-sealed">0</strong></div>
+      </div>
+      <button type="button" class="btn btn-tiny" id="btn-bag-toggle">BAG</button>
+    </header>
 
-      <main class="stage">
-        <div class="cabinet-frame">
-          <div class="bulb-row" aria-hidden="true">
-            ${Array.from({ length: 11 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}
-          </div>
-          <canvas id="game" width="420" height="640" aria-label="Lucky Claw arcade cabinet"></canvas>
-          <div class="cabinet-shadow" aria-hidden="true"></div>
-        </div>
+    <section class="machine-rail" id="machine-rail" aria-label="Choose a claw machine"></section>
 
+    <main class="playfield">
+      <div class="cabinet-frame">
+        <canvas id="game" width="420" height="640" aria-label="Lucky Claw arcade cabinet"></canvas>
+      </div>
+
+      <div class="dock">
+        <p class="machine-blurb" id="machine-blurb"></p>
         <div class="controls" role="group" aria-label="Game controls">
           <button type="button" class="btn btn-ghost" id="btn-left" aria-label="Move claw left">←</button>
           <button type="button" class="btn btn-drop" id="btn-drop">DROP</button>
           <button type="button" class="btn btn-ghost" id="btn-right" aria-label="Move claw right">→</button>
           <button type="button" class="btn btn-play" id="btn-play">INSERT COIN</button>
         </div>
+        <p class="hint">1-4 switch machines · ← → aim · Space drop · claw sways on harder cabinets</p>
+      </div>
+    </main>
 
-        <p class="hint">Aim with ← → · Space to drop · land on a prize and you keep it</p>
-
-        <section class="howto" aria-label="How to play">
-          <p><strong>01 Aim</strong> Slide over a prize</p>
-          <p><strong>02 Drop</strong> Hit it fair — keep it</p>
-          <p><strong>03 Open</strong> Crack capsules for coins</p>
-        </section>
-
-        <section class="bag-panel" aria-label="Prize bag">
-          <div class="bag-head">
-            <div>
-              <h2>Prize Bag</h2>
-              <p class="bag-sub" id="bag-sub">Win capsules, then open them for loot.</p>
-            </div>
-            <div class="bag-actions">
-              <button type="button" class="btn btn-tiny" id="btn-open-all">Open All</button>
-              <button type="button" class="btn btn-tiny btn-muted" id="btn-clear-opened">Clear Opened</button>
-            </div>
-          </div>
-          <div class="bag-grid" id="bag-grid"></div>
-          <div class="sticker-row" id="sticker-row"></div>
-        </section>
-      </main>
-    </div>
+    <aside class="bag-drawer" id="bag-drawer" aria-label="Prize bag">
+      <div class="bag-head">
+        <div>
+          <h2>Prize Bag</h2>
+          <p class="bag-sub" id="bag-sub">Open sealed prizes for coins.</p>
+        </div>
+        <button type="button" class="btn btn-tiny btn-muted" id="btn-bag-close">CLOSE</button>
+      </div>
+      <div class="bag-actions">
+        <button type="button" class="btn btn-tiny" id="btn-open-all">Open All</button>
+        <button type="button" class="btn btn-tiny btn-muted" id="btn-clear-opened">Clear Opened</button>
+      </div>
+      <div class="bag-grid" id="bag-grid"></div>
+      <div class="sticker-row" id="sticker-row"></div>
+    </aside>
 
     <div class="modal hidden" id="open-modal" role="dialog" aria-modal="true" aria-labelledby="open-title">
       <div class="modal-card">
@@ -111,6 +99,25 @@ const statCoins = document.querySelector<HTMLElement>('#stat-coins')!
 const statScore = document.querySelector<HTMLElement>('#stat-score')!
 const statBest = document.querySelector<HTMLElement>('#stat-best')!
 const statSealed = document.querySelector<HTMLElement>('#stat-sealed')!
+const machineRail = document.querySelector<HTMLElement>('#machine-rail')!
+const machineBlurb = document.querySelector<HTMLElement>('#machine-blurb')!
+const bagDrawer = document.querySelector<HTMLElement>('#bag-drawer')!
+const bagToggle = document.querySelector<HTMLButtonElement>('#btn-bag-toggle')!
+const bagClose = document.querySelector<HTMLButtonElement>('#btn-bag-close')!
+const cabinetFrame = document.querySelector<HTMLElement>('.cabinet-frame')!
+
+function fitCanvas() {
+  const frame = cabinetFrame.getBoundingClientRect()
+  const pad = 8
+  const maxW = Math.max(220, frame.width - pad)
+  const maxH = Math.max(280, frame.height - pad)
+  const scale = Math.min(maxW / 420, maxH / 640)
+  const w = Math.floor(420 * scale)
+  const h = Math.floor(640 * scale)
+  canvas.style.width = `${w}px`
+  canvas.style.height = `${h}px`
+  game.resize()
+}
 
 function showOpenModal(reward: OpenReward) {
   openKicker.textContent = reward.sticker ? `Collected · ${reward.sticker}` : 'Capsule cracked'
@@ -124,17 +131,37 @@ function hideOpenModal() {
   modal.classList.add('hidden')
 }
 
+function renderMachines(machines: MachineDef[], activeId: string, canSwitch: boolean, coins: number) {
+  machineRail.innerHTML = machines
+    .map((m) => {
+      const locked = coins < m.cost && activeId !== m.id
+      return `
+        <button type="button"
+          class="machine-chip ${m.id === activeId ? 'active' : ''} ${locked ? 'pricey' : ''}"
+          data-machine="${m.id}"
+          ${!canSwitch ? 'disabled' : ''}
+          style="--chip:${m.body[0]}">
+          <span class="chip-name">${m.short}</span>
+          <span class="chip-cost">${m.cost}c</span>
+          <span class="chip-diff">${m.difficulty}</span>
+        </button>
+      `
+    })
+    .join('')
+}
+
 function renderBag(bag: BagPrize[], stickers: string[], sealedCount: number) {
   bagSub.textContent =
     sealedCount > 0
-      ? `${sealedCount} sealed capsule${sealedCount === 1 ? '' : 's'} ready — every open pays coins.`
-      : 'Empty bag. Grab a prize, then open the capsule here.'
+      ? `${sealedCount} sealed · every open pays coins`
+      : 'Empty bag. Win phones, watches, toys… then open them.'
 
   openAllBtn.disabled = sealedCount === 0
   clearOpenedBtn.disabled = !bag.some((p) => !p.sealed)
+  bagToggle.textContent = sealedCount > 0 ? `BAG (${sealedCount})` : 'BAG'
 
   if (bag.length === 0) {
-    bagGrid.innerHTML = `<p class="bag-empty">No prizes yet — insert a coin and drop the claw.</p>`
+    bagGrid.innerHTML = `<p class="bag-empty">No prizes yet — pick a machine and drop.</p>`
   } else {
     bagGrid.innerHTML = bag
       .map((item) => {
@@ -177,21 +204,28 @@ function syncUi() {
   leftBtn.disabled = !state.canMove
   rightBtn.disabled = !state.canMove
   playBtn.textContent =
-    state.coins < 1 ? 'NEED COINS' : state.phase === 'attract' ? 'INSERT COIN' : 'PLAY AGAIN'
+    state.coins < state.cost
+      ? 'NEED COINS'
+      : state.phase === 'attract'
+        ? `PLAY · ${state.cost}c`
+        : `AGAIN · ${state.cost}c`
   statCoins.textContent = String(state.coins)
   statScore.textContent = String(state.score)
   statBest.textContent = String(state.highScore)
   statSealed.textContent = String(state.sealedCount)
+  machineBlurb.textContent = `${state.machine.name} — ${state.machine.blurb}`
+  renderMachines(state.machines, state.machineId, state.canSwitchMachine, state.coins)
   renderBag(state.bag, state.stickers, state.sealedCount)
 }
 
 game.setStateListener(syncUi)
 syncUi()
+fitCanvas()
 game.start()
 
 window.addEventListener('keydown', game.onKeyDown)
 window.addEventListener('keyup', game.onKeyUp)
-window.addEventListener('resize', () => game.resize())
+window.addEventListener('resize', fitCanvas)
 
 playBtn.addEventListener('click', () => game.queuePlay())
 dropBtn.addEventListener('click', () => game.queueDrop())
@@ -199,6 +233,15 @@ closeModalBtn.addEventListener('click', hideOpenModal)
 modal.addEventListener('click', (e) => {
   if (e.target === modal) hideOpenModal()
 })
+
+machineRail.addEventListener('click', (e) => {
+  const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-machine]')
+  if (!btn?.dataset.machine) return
+  game.setMachine(btn.dataset.machine as 'toybox' | 'plush' | 'gadget' | 'vip')
+})
+
+bagToggle.addEventListener('click', () => bagDrawer.classList.add('open'))
+bagClose.addEventListener('click', () => bagDrawer.classList.remove('open'))
 
 bagGrid.addEventListener('click', (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>('[data-open]')
