@@ -26,7 +26,7 @@ app.innerHTML = `
         <div class="stat"><span>Sealed</span><strong id="stat-sealed">0</strong></div>
       </div>
       <div class="top-actions">
-        <button type="button" class="btn btn-tiny btn-credits" id="btn-credits">+10 CREDITS</button>
+        <button type="button" class="btn btn-tiny btn-credits" id="btn-credits">DAILY +10</button>
         <button type="button" class="btn btn-tiny" id="btn-bag-toggle">BAG</button>
       </div>
     </header>
@@ -224,6 +224,11 @@ function syncUi() {
       : state.phase === 'attract'
         ? `PLAY · ${state.cost}c`
         : `AGAIN · ${state.cost}c`
+  creditsBtn.disabled = !state.canClaimDaily
+  creditsBtn.textContent = state.canClaimDaily ? 'DAILY +10' : 'CLAIMED TODAY'
+  creditsBtn.title = state.canClaimDaily
+    ? 'Claim 10 free credits once per day'
+    : 'Already claimed today — come back tomorrow'
   statCoins.textContent = String(state.coins)
   statScore.textContent = String(state.score)
   statBest.textContent = String(state.highScore)
@@ -266,7 +271,7 @@ machineRail.addEventListener('click', (e) => {
 
 bagToggle.addEventListener('click', () => bagDrawer.classList.add('open'))
 bagClose.addEventListener('click', () => bagDrawer.classList.remove('open'))
-creditsBtn.addEventListener('click', () => game.addCredits(10))
+creditsBtn.addEventListener('click', () => game.claimDailyCredits())
 
 bagGrid.addEventListener('click', (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>('[data-open]')

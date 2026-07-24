@@ -270,6 +270,15 @@ html, body, #app {
 
 .btn-play:active:not(:disabled) { box-shadow: 0 3px 0 var(--teal-deep); }
 
+.btn-tiny {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: linear-gradient(180deg, #9ad9d6, var(--teal));
+  color: #103333;
+}
+
 .top-actions {
   display: flex;
   gap: 8px;
@@ -279,6 +288,12 @@ html, body, #app {
 .btn-credits {
   background: linear-gradient(180deg, #ffe08a, var(--amber));
   color: var(--ink);
+}
+
+.btn-credits:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.2);
+  cursor: not-allowed;
 }
 
 .btn-muted {

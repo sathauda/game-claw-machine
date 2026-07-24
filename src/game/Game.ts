@@ -22,7 +22,7 @@ import {
   type Prize,
 } from './types'
 
-const SAVE_KEY = 'lucky-claw-save-v4'
+const SAVE_KEY = 'lucky-claw-save-v5'
 const START_COINS = 60
 const CREDIT_PACK = 10
 
@@ -34,11 +34,23 @@ interface SaveData {
   stickers: string[]
   wins: number
   machineId: MachineId
+  /** Local calendar day (YYYY-MM-DD) when daily credits were last claimed */
+  lastDailyCreditDay?: string
+}
+
+function todayKey(d = new Date()) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 function loadSave(): SaveData {
   try {
-    const raw = localStorage.getItem(SAVE_KEY) || localStorage.getItem('lucky-claw-save-v3')
+    const raw =
+      localStorage.getItem(SAVE_KEY) ||
+      localStorage.getItem('lucky-claw-save-v4') ||
+      localStorage.getItem('lucky-claw-save-v3')
     if (!raw) return defaultSave()
     const data = JSON.parse(raw) as SaveData
     const machineId = MACHINES.some((m) => m.id === data.machineId) ? data.machineId : 'toybox'
@@ -52,6 +64,7 @@ function loadSave(): SaveData {
       stickers: Array.isArray(data.stickers) ? data.stickers : [],
       wins,
       machineId: unlocked,
+      lastDailyCreditDay: typeof data.lastDailyCreditDay === 'string' ? data.lastDailyCreditDay : undefined,
     }
   } catch {
     return defaultSave()
@@ -67,6 +80,7 @@ function defaultSave(): SaveData {
     stickers: [],
     wins: 0,
     machineId: 'toybox',
+    lastDailyCreditDay: undefined,
   }
 }
 
@@ -91,6 +105,7 @@ export class ClawGame {
   private bag: BagPrize[]
   private stickers: string[]
   private wins: number
+  private lastDailyCreditDay: string | undefined
   private streak = 0
   private message = 'Pick a machine · aim tight · keep what you hit'
   private lastResult = ''
@@ -120,6 +135,7 @@ export class ClawGame {
     this.bag = save.bag
     this.stickers = save.stickers
     this.wins = save.wins
+    this.lastDailyCreditDay = save.lastDailyCreditDay
     this.machine = getMachine(save.machineId)
     this.prizes = createPrizePile(this.machine, 11)
     this.resize()
@@ -154,6 +170,8 @@ export class ClawGame {
         ? { level: nextLock.level, name: nextLock.name, need: nextLock.unlockWins - this.wins }
         : null,
       cost,
+      dailyCreditAmount: CREDIT_PACK,
+      canClaimDaily: this.lastDailyCreditDay !== todayKey(),
       canPlay:
         this.coins >= cost &&
         (this.phase === 'attract' || this.phase === 'ready' || this.phase === 'result'),
@@ -233,14 +251,25 @@ export class ClawGame {
     this.playQueued = true
   }
 
-  /** Add arcade credits (coins). */
-  addCredits(amount = CREDIT_PACK) {
-    const gain = Math.max(0, Math.floor(amount))
-    if (gain <= 0) return
-    this.coins += gain
-    this.message = `+${gain} credits added`
+  /** Claim +10 arcade credits once per local calendar day. */
+  claimDailyCredits(): boolean {
+    const today = todayKey()
+    if (this.lastDailyCreditDay === today) {
+      this.message = 'Daily credits already claimed — come back tomorrow'
+      this.notify()
+      return false
+    }
+    this.coins += CREDIT_PACK
+    this.lastDailyCreditDay = today
+    this.message = `+${CREDIT_PACK} daily credits claimed`
     this.persist()
     this.notify()
+    return true
+  }
+
+  /** @deprecated use claimDailyCredits — kept for older hooks */
+  addCredits(_amount = CREDIT_PACK) {
+    return this.claimDailyCredits()
   }
 
   openBagPrize(id: string): OpenReward | null {
@@ -339,6 +368,7 @@ export class ClawGame {
       stickers: this.stickers,
       wins: this.wins,
       machineId: this.machine.id,
+      lastDailyCreditDay: this.lastDailyCreditDay,
     }
     localStorage.setItem(SAVE_KEY, JSON.stringify(data))
   }
