@@ -43,7 +43,7 @@ app.innerHTML = `
           <button type="button" class="btn btn-ghost" id="btn-right" aria-label="Move claw right">→</button>
           <button type="button" class="btn btn-play" id="btn-play">INSERT COIN</button>
         </div>
-        <p class="hint">1-0 pick level · [ ] cycle · ← → aim · Space drop · win prizes to unlock higher levels</p>
+        <p class="hint">1-0 quick-pick L1-10 · [ ] cycle all 20 levels · ← → aim · Space drop</p>
       </div>
     </main>
 
