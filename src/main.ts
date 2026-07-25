@@ -27,6 +27,7 @@ app.innerHTML = `
       </div>
       <div class="top-actions">
         <button type="button" class="btn btn-tiny btn-credits" id="btn-credits">DAILY +10</button>
+        <button type="button" class="btn btn-tiny btn-og" id="btn-og">OG PRIZE</button>
         <button type="button" class="btn btn-tiny" id="btn-bag-toggle">BAG</button>
       </div>
     </header>
@@ -108,6 +109,7 @@ const bagDrawer = document.querySelector<HTMLElement>('#bag-drawer')!
 const bagToggle = document.querySelector<HTMLButtonElement>('#btn-bag-toggle')!
 const bagClose = document.querySelector<HTMLButtonElement>('#btn-bag-close')!
 const creditsBtn = document.querySelector<HTMLButtonElement>('#btn-credits')!
+const ogPrizeBtn = document.querySelector<HTMLButtonElement>('#btn-og')!
 const cabinetFrame = document.querySelector<HTMLElement>('.cabinet-frame')!
 
 function fitCanvas() {
@@ -242,6 +244,17 @@ function syncUi() {
   creditsBtn.title = state.canClaimDaily
     ? 'Claim 10 free credits once per day'
     : 'Already claimed today — come back tomorrow'
+  ogPrizeBtn.disabled = !state.canClaimOgPrize
+  ogPrizeBtn.textContent = state.canClaimOgPrize
+    ? 'OG PRIZE'
+    : state.ogPrizeDaysLeft === 1
+      ? 'OG TOMORROW'
+      : `OG ${state.ogPrizeDaysLeft}D`
+  ogPrizeBtn.title = state.canClaimOgPrize
+    ? `Claim a sealed OG neon prize every ${state.ogPrizeCooldownDays} days`
+    : state.ogPrizeDaysLeft === 1
+      ? 'OG prize ready tomorrow'
+      : `OG prize ready in ${state.ogPrizeDaysLeft} days`
   statCoins.textContent = String(state.coins)
   statScore.textContent = String(state.score)
   statBest.textContent = String(state.highScore)
@@ -289,6 +302,10 @@ machineRail.addEventListener('click', (e) => {
 bagToggle.addEventListener('click', () => bagDrawer.classList.add('open'))
 bagClose.addEventListener('click', () => bagDrawer.classList.remove('open'))
 creditsBtn.addEventListener('click', () => game.claimDailyCredits())
+ogPrizeBtn.addEventListener('click', () => {
+  const prize = game.claimOgPrize()
+  if (prize) bagDrawer.classList.add('open')
+})
 
 bagGrid.addEventListener('click', (e) => {
   const target = (e.target as HTMLElement).closest<HTMLElement>('[data-open]')

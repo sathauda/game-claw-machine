@@ -296,6 +296,18 @@ html, body, #app {
   cursor: not-allowed;
 }
 
+.btn-og {
+  background: linear-gradient(180deg, #d8ff8a, #7ee0f0);
+  color: #0a1a22;
+  font-weight: 800;
+}
+
+.btn-og:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.25);
+  cursor: not-allowed;
+}
+
 .btn-muted {
   background: var(--panel);
   color: var(--cream);

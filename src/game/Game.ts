@@ -1,4 +1,5 @@
 import {
+  applyMutation,
   createPrizePile,
   emptyBuff,
   mergeBuff,
@@ -20,6 +21,7 @@ import {
   CABINET,
   MACHINES,
   getMachine,
+  getPrizeDef,
   type BagPrize,
   type ClawState,
   type GamePhase,
@@ -29,11 +31,13 @@ import {
   type OpenReward,
   type Particle,
   type Prize,
+  type PrizeKind,
 } from './types'
 
 const SAVE_KEY = 'lucky-claw-save-v6'
 const START_COINS = 60
 const CREDIT_PACK = 10
+const OG_PRIZE_COOLDOWN_DAYS = 2
 
 interface SaveData {
   coins: number
@@ -45,6 +49,8 @@ interface SaveData {
   machineId: MachineId
   /** Local calendar day (YYYY-MM-DD) when daily credits were last claimed */
   lastDailyCreditDay?: string
+  /** Local calendar day when the bi-daily OG prize was last claimed */
+  lastOgPrizeDay?: string
   buff?: NeonBuff
 }
 
@@ -53,6 +59,16 @@ function todayKey(d = new Date()) {
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+function parseDayKey(key: string): number {
+  const [y, m, d] = key.split('-').map(Number)
+  return Date.UTC(y, m - 1, d)
+}
+
+/** Whole local calendar days from `fromKey` to `toKey` (can be negative). */
+function calendarDaysBetween(fromKey: string, toKey: string): number {
+  return Math.floor((parseDayKey(toKey) - parseDayKey(fromKey)) / 86_400_000)
 }
 
 function loadSave(): SaveData {
@@ -82,6 +98,7 @@ function loadSave(): SaveData {
       wins,
       machineId: unlocked,
       lastDailyCreditDay: typeof data.lastDailyCreditDay === 'string' ? data.lastDailyCreditDay : undefined,
+      lastOgPrizeDay: typeof data.lastOgPrizeDay === 'string' ? data.lastOgPrizeDay : undefined,
       buff: data.buff ? { ...emptyBuff(), ...data.buff } : emptyBuff(),
     }
   } catch {
@@ -99,6 +116,7 @@ function defaultSave(): SaveData {
     wins: 0,
     machineId: 'toybox',
     lastDailyCreditDay: undefined,
+    lastOgPrizeDay: undefined,
     buff: emptyBuff(),
   }
 }
@@ -125,6 +143,7 @@ export class ClawGame {
   private stickers: string[]
   private wins: number
   private lastDailyCreditDay: string | undefined
+  private lastOgPrizeDay: string | undefined
   private buff: NeonBuff = emptyBuff()
   private streak = 0
   private message = 'Pick a machine · aim tight · keep what you hit'
@@ -156,10 +175,21 @@ export class ClawGame {
     this.stickers = save.stickers
     this.wins = save.wins
     this.lastDailyCreditDay = save.lastDailyCreditDay
+    this.lastOgPrizeDay = save.lastOgPrizeDay
     this.buff = save.buff ? { ...emptyBuff(), ...save.buff } : emptyBuff()
     this.machine = getMachine(save.machineId)
     this.prizes = createPrizePile(this.machine, 11)
     this.resize()
+  }
+
+  private ogPrizeStatus() {
+    const today = todayKey()
+    if (!this.lastOgPrizeDay) {
+      return { canClaim: true, daysLeft: 0, today }
+    }
+    const elapsed = calendarDaysBetween(this.lastOgPrizeDay, today)
+    const daysLeft = Math.max(0, OG_PRIZE_COOLDOWN_DAYS - elapsed)
+    return { canClaim: daysLeft === 0, daysLeft, today }
   }
 
   setStateListener(cb: () => void) {
@@ -171,6 +201,7 @@ export class ClawGame {
     const cost = this.machine.cost
     const unlockedIds = MACHINES.filter((m) => this.wins >= m.unlockWins).map((m) => m.id)
     const nextLock = MACHINES.find((m) => this.wins < m.unlockWins)
+    const ogStatus = this.ogPrizeStatus()
     return {
       phase: this.phase,
       coins: this.coins,
@@ -193,6 +224,9 @@ export class ClawGame {
       cost,
       dailyCreditAmount: CREDIT_PACK,
       canClaimDaily: this.lastDailyCreditDay !== todayKey(),
+      canClaimOgPrize: ogStatus.canClaim,
+      ogPrizeDaysLeft: ogStatus.daysLeft,
+      ogPrizeCooldownDays: OG_PRIZE_COOLDOWN_DAYS,
       buff: this.buff,
       canPlay:
         (this.coins >= cost || this.buff.freePlays > 0) &&
@@ -295,6 +329,41 @@ export class ClawGame {
     this.persist()
     this.notify()
     return true
+  }
+
+  /** Claim a sealed OG neon prize once every 2 local calendar days. */
+  claimOgPrize(): BagPrize | null {
+    const status = this.ogPrizeStatus()
+    if (!status.canClaim) {
+      this.message =
+        status.daysLeft === 1
+          ? 'OG prize ready tomorrow — check back then'
+          : `OG prize on cooldown — ${status.daysLeft} days left`
+      this.notify()
+      return null
+    }
+
+    const kind: PrizeKind = Math.random() < 0.3 ? 'neonKing' : 'neonOG'
+    const def = getPrizeDef(kind)
+    const mutated = applyMutation(def, 'none')
+    const bagItem: BagPrize = {
+      id: `og-gift-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      kind,
+      label: kind === 'neonKing' ? 'Bi-Daily OG King' : 'Bi-Daily OG Core',
+      rarity: 'og',
+      color: mutated.color,
+      accent: mutated.accent,
+      capsule: mutated.capsule,
+      value: mutated.value,
+      sealed: true,
+      mutation: 'none',
+    }
+    this.bag.unshift(bagItem)
+    this.lastOgPrizeDay = status.today
+    this.message = `${bagItem.label} sealed — open it in your bag!`
+    this.persist()
+    this.notify()
+    return bagItem
   }
 
   /** @deprecated use claimDailyCredits — kept for older hooks */
@@ -406,6 +475,7 @@ export class ClawGame {
       wins: this.wins,
       machineId: this.machine.id,
       lastDailyCreditDay: this.lastDailyCreditDay,
+      lastOgPrizeDay: this.lastOgPrizeDay,
       buff: this.buff,
     }
     localStorage.setItem(SAVE_KEY, JSON.stringify(data))
