@@ -2,6 +2,7 @@ import {
   CABINET,
   getPrizeDef,
   type MachineDef,
+  type MachineId,
   type Mutation,
   type NeonBuff,
   type OpenReward,
@@ -59,13 +60,21 @@ function bumpRarity(current: Rarity, min: Rarity): Rarity {
   return RARITY_RANK[current] >= RARITY_RANK[min] ? current : min
 }
 
-/** Roll a neon mutation. Neon Night cabinets mutate much more often. */
-export function rollMutation(rarity: Rarity, neonCabinet: boolean, kind: PrizeKind): Mutation {
-  if (!NEON_KINDS.has(kind)) return 'none'
+/** Storm Bay: lightning strikes some tech prizes; a few forge into OG. */
+function rollStormMutation(rarity: Rarity): Mutation {
+  const r = Math.random()
+  const ogChance = rarity === 'legend' ? 0.08 : rarity === 'epic' ? 0.055 : 0.04
+  const boltChance = rarity === 'legend' ? 0.28 : rarity === 'epic' ? 0.24 : 0.2
 
+  if (r < ogChance) return 'ogMut'
+  if (r < ogChance + boltChance) return 'lightning'
+  return 'none'
+}
+
+/** Neon Night / neon kinds: volt ladder. Neon cabinets mutate more often. */
+function rollNeonMutation(rarity: Rarity, neonCabinet: boolean): Mutation {
   const boost = neonCabinet ? 1.75 : 1
   const r = Math.random()
-
   const chance = (base: number) => Math.min(0.92, base * boost)
 
   if (rarity === 'og') {
@@ -99,11 +108,16 @@ export function rollMutation(rarity: Rarity, neonCabinet: boolean, kind: PrizeKi
     return 'none'
   }
 
-  // common / rare neon — mutations show up, but mythic/OG mut stay scarce
   if (r < chance(0.005)) return 'ogMut'
   if (r < chance(0.005) + chance(0.018)) return 'mythicMut'
   if (r < chance(0.005) + chance(0.018) + chance(0.08)) return 'overcharge'
   if (r < chance(0.005) + chance(0.018) + chance(0.08) + chance(0.18)) return 'volt'
+  return 'none'
+}
+
+export function rollMutation(rarity: Rarity, kind: PrizeKind, machineId?: MachineId): Mutation {
+  if (machineId === 'storm') return rollStormMutation(rarity)
+  if (NEON_KINDS.has(kind)) return rollNeonMutation(rarity, machineId === 'neon')
   return 'none'
 }
 
@@ -147,6 +161,18 @@ export function applyMutation(
     }
   }
 
+  if (mutation === 'lightning') {
+    return {
+      label: `Bolt ${def.label}`,
+      value: Math.round(def.value * 2.8),
+      rarity: bumpRarity(def.rarity, 'mythic'),
+      color: '#E8F4FF',
+      accent: '#FFE29A',
+      capsule: '#9BB8E0',
+      radius: def.radius + 1,
+    }
+  }
+
   if (mutation === 'mythicMut') {
     return {
       label: `Mythic ${def.label}`,
@@ -159,7 +185,7 @@ export function applyMutation(
     }
   }
 
-  // ogMut — max OP
+  // ogMut — max OP (storm lightning forge uses cooler electric gold)
   return {
     label: `OG ${def.label}`,
     value: Math.round(def.value * 10),
@@ -171,9 +197,17 @@ export function applyMutation(
   }
 }
 
-export function createPrizeFromDef(def: PrizeDef, x: number, y: number, neonCabinet = false): Prize {
-  const mutation = rollMutation(def.rarity, neonCabinet, def.kind)
+export function createPrizeFromDef(def: PrizeDef, x: number, y: number, machine?: MachineDef): Prize {
+  const mutation = rollMutation(def.rarity, def.kind, machine?.id)
   const mutated = applyMutation(def, mutation)
+
+  if (machine?.id === 'storm' && mutation === 'ogMut') {
+    mutated.label = `Storm OG ${def.label}`
+    mutated.color = '#F4F8FF'
+    mutated.accent = '#FFE29A'
+    mutated.capsule = '#7AA0D4'
+  }
+
   return {
     id: nextId++,
     kind: def.kind,
@@ -192,7 +226,6 @@ export function createPrizePile(machine: MachineDef, count = 10): Prize[] {
   const right = CABINET.glassRight - 28
   const baseY = CABINET.floorY - 6
   const cols = 5
-  const neonCabinet = machine.id === 'neon'
 
   for (let i = 0; i < count; i++) {
     const def = pickDef(machine.prizeKinds)
@@ -200,7 +233,7 @@ export function createPrizePile(machine: MachineDef, count = 10): Prize[] {
     const row = Math.floor(i / cols)
     const x = left + ((right - left) / (cols - 1)) * col + (Math.random() - 0.5) * 10
     const y = baseY - row * 38 - Math.random() * 6
-    prizes.push(createPrizeFromDef(def, x, y, neonCabinet || NEON_KINDS.has(def.kind)))
+    prizes.push(createPrizeFromDef(def, x, y, machine))
   }
 
   return settlePrizes(prizes)
@@ -298,6 +331,8 @@ function mutationPayoutMult(mutation: Mutation): number {
       return 8
     case 'mythicMut':
       return 5
+    case 'lightning':
+      return 3.5
     case 'overcharge':
       return 3
     case 'volt':
@@ -311,6 +346,8 @@ function mutationBuff(mutation: Mutation): NeonBuff | undefined {
   switch (mutation) {
     case 'volt':
       return { playsLeft: 3, hitBoost: 5, swayCut: 2, freePlays: 0, openMult: 1.25 }
+    case 'lightning':
+      return { playsLeft: 5, hitBoost: 9, swayCut: 5, freePlays: 1, openMult: 1.6 }
     case 'overcharge':
       return { playsLeft: 4, hitBoost: 8, swayCut: 4, freePlays: 1, openMult: 1.5 }
     case 'mythicMut':
@@ -365,20 +402,39 @@ export function openPrizeReward(
         ? `OG MUT · ${reward.title}`
         : mutation === 'mythicMut'
           ? `MYTHIC MUT · ${reward.title}`
-          : mutation === 'overcharge'
-            ? `X-MUT · ${reward.title}`
-            : mutation === 'volt'
-              ? `VOLT · ${reward.title}`
-              : reward.title,
+          : mutation === 'lightning'
+            ? `BOLT · ${reward.title}`
+            : mutation === 'overcharge'
+              ? `X-MUT · ${reward.title}`
+              : mutation === 'volt'
+                ? `VOLT · ${reward.title}`
+                : reward.title,
   })
 
-  if (kind === 'neonKing' || kind === 'neonOG' || rarity === 'og') {
+  if (mutation === 'lightning') {
     return withMut({
-      title: 'OG NEON DROP!',
-      detail: `${label} — original night-market core unlocked`,
+      title: 'LIGHTNING STRIKE!',
+      detail: `${label} crackled open with storm credits`,
+      coins: 12 + Math.floor(Math.random() * 8),
+      score: 28 + Math.floor(Math.random() * 16),
+      sticker: 'Storm Bolt Pin',
+    })
+  }
+
+  if (kind === 'neonKing' || kind === 'neonOG' || rarity === 'og') {
+    const stormOg = label.startsWith('Storm OG')
+    return withMut({
+      title: stormOg ? 'STORM OG FORGE!' : 'OG NEON DROP!',
+      detail: stormOg
+        ? `${label} — lightning forged this into an OG relic`
+        : `${label} — original night-market core unlocked`,
       coins: 28 + Math.floor(Math.random() * 18),
       score: 70 + Math.floor(Math.random() * 40),
-      sticker: kind === 'neonKing' ? 'OG Neon Crown' : 'OG Neon Seal',
+      sticker: stormOg
+        ? 'Storm OG Seal'
+        : kind === 'neonKing'
+          ? 'OG Neon Crown'
+          : 'OG Neon Seal',
     })
   }
 
@@ -554,6 +610,8 @@ export function mutationLabel(mutation: Mutation): string {
       return 'OG MUT'
     case 'mythicMut':
       return 'MYTHIC MUT'
+    case 'lightning':
+      return 'BOLT'
     case 'overcharge':
       return 'X-MUT'
     case 'volt':

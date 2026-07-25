@@ -707,7 +707,19 @@ export class ClawGame {
 
     const newlyUnlocked = MACHINES.find((m) => m.unlockWins === this.wins)
     const mutTag =
-      prize.mutation && prize.mutation !== 'none' ? ` · ${prize.mutation === 'ogMut' ? 'OG MUT' : prize.mutation === 'mythicMut' ? 'MYTHIC MUT' : prize.mutation === 'overcharge' ? 'X-MUT' : 'VOLT'}` : ''
+      prize.mutation && prize.mutation !== 'none'
+        ? ` · ${
+            prize.mutation === 'ogMut'
+              ? 'OG MUT'
+              : prize.mutation === 'mythicMut'
+                ? 'MYTHIC MUT'
+                : prize.mutation === 'lightning'
+                  ? 'BOLT'
+                  : prize.mutation === 'overcharge'
+                    ? 'X-MUT'
+                    : 'VOLT'
+          }`
+        : ''
     this.lastResult = newlyUnlocked
       ? `${prize.label} sealed${mutTag} · Unlocked Lvl ${newlyUnlocked.level}!`
       : `${prize.label} sealed${mutTag} — open it!`

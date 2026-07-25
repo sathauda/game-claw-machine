@@ -439,6 +439,10 @@ button.capsule:hover { filter: brightness(1.05); transform: translateY(-1px); }
 .mut-volt {
   box-shadow: 0 0 0 2px rgba(184, 255, 74, 0.65), 0 0 12px rgba(184, 255, 74, 0.25);
 }
+.mut-lightning {
+  box-shadow: 0 0 0 2px rgba(232, 244, 255, 0.8), 0 0 16px rgba(155, 184, 224, 0.45);
+  animation: mutPulse 1.1s ease-in-out infinite;
+}
 .mut-overcharge {
   box-shadow: 0 0 0 2px rgba(255, 107, 154, 0.75), 0 0 14px rgba(126, 240, 200, 0.3);
 }

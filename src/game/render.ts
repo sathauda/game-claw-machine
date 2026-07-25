@@ -209,6 +209,19 @@ export function drawPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number)
       break
   }
 
+  // Storm lightning (and forged OG) aura on non-neon prizes
+  if (
+    p.mutation &&
+    p.mutation !== 'none' &&
+    !p.kind.startsWith('neon')
+  ) {
+    if (p.mutation === 'lightning' || p.mutation === 'ogMut') {
+      drawLightningAura(ctx, p, time)
+    } else {
+      drawMutationRing(ctx, p, time)
+    }
+  }
+
   ctx.restore()
 }
 
@@ -243,6 +256,8 @@ function mutationStrength(p: Prize): number {
       return 2.4
     case 'mythicMut':
       return 1.9
+    case 'lightning':
+      return 1.75
     case 'overcharge':
       return 1.55
     case 'volt':
@@ -259,6 +274,7 @@ function drawMutationRing(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     overcharge: '#FF6B9A',
     mythicMut: '#FF8A5A',
     ogMut: '#FFE29A',
+    lightning: '#E8F4FF',
   }
   const c = colors[p.mutation] ?? p.accent
   const spin = time * 4 + p.wobble
@@ -267,11 +283,40 @@ function drawMutationRing(ctx: CanvasRenderingContext2D, p: Prize, time: number)
   ctx.beginPath()
   ctx.arc(0, 0, p.radius * 1.15, spin, spin + Math.PI * 1.35)
   ctx.stroke()
-  if (p.mutation === 'ogMut' || p.mutation === 'mythicMut') {
+  if (p.mutation === 'ogMut' || p.mutation === 'mythicMut' || p.mutation === 'lightning') {
     ctx.beginPath()
     ctx.strokeStyle = withAlpha('#7EE0F0', 0.55)
     ctx.arc(0, 0, p.radius * 1.28, -spin, -spin + Math.PI)
     ctx.stroke()
+  }
+}
+
+function drawLightningAura(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  const flash = 0.35 + Math.sin(time * 14 + p.wobble) * 0.25
+  neonGlow(ctx, '#9BB8E0', time, p.wobble, p.radius, p.mutation === 'ogMut' ? 2.1 : 1.6)
+  drawMutationRing(ctx, p, time)
+
+  const boltColor = p.mutation === 'ogMut' ? '#FFE29A' : '#E8F4FF'
+  ctx.strokeStyle = withAlpha(boltColor, 0.55 + flash * 0.4)
+  ctx.lineWidth = p.mutation === 'ogMut' ? 2.4 : 1.8
+  ctx.lineJoin = 'round'
+
+  const drawBolt = (x0: number, y0: number, scale: number, flip: number) => {
+    ctx.beginPath()
+    ctx.moveTo(x0, y0)
+    ctx.lineTo(x0 + 4 * scale * flip, y0 + 7 * scale)
+    ctx.lineTo(x0 - 2 * scale * flip, y0 + 7 * scale)
+    ctx.lineTo(x0 + 5 * scale * flip, y0 + 16 * scale)
+    ctx.stroke()
+  }
+
+  const pulse = Math.sin(time * 18 + p.wobble)
+  if (pulse > -0.2) {
+    drawBolt(-p.radius * 0.85, -p.radius * 0.9, 1, 1)
+    drawBolt(p.radius * 0.7, -p.radius * 0.75, 0.85, -1)
+  }
+  if (p.mutation === 'ogMut' && pulse > 0.3) {
+    drawBolt(0, -p.radius * 1.05, 1.1, 1)
   }
 }
 
