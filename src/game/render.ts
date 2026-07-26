@@ -252,6 +252,8 @@ function neonGlow(
 
 function mutationStrength(p: Prize): number {
   switch (p.mutation) {
+    case 'superDooperNeon':
+      return 2.8
     case 'ogMut':
       return 2.4
     case 'superElectric':
@@ -278,11 +280,14 @@ function drawMutationRing(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     ogMut: '#FFE29A',
     lightning: '#E8F4FF',
     superElectric: '#7EE0F0',
+    superDooperNeon: '#FF6B9A',
   }
   const c = colors[p.mutation] ?? p.accent
-  const spin = time * 4 + p.wobble
-  ctx.strokeStyle = withAlpha(c, 0.75)
-  ctx.lineWidth = p.mutation === 'ogMut' || p.mutation === 'superElectric' ? 3.5 : 2.5
+  const spin = time * (p.mutation === 'superDooperNeon' ? 6 : 4) + p.wobble
+  const thick =
+    p.mutation === 'superDooperNeon' ? 4 : p.mutation === 'ogMut' || p.mutation === 'superElectric' ? 3.5 : 2.5
+  ctx.strokeStyle = withAlpha(c, 0.8)
+  ctx.lineWidth = thick
   ctx.beginPath()
   ctx.arc(0, 0, p.radius * 1.15, spin, spin + Math.PI * 1.35)
   ctx.stroke()
@@ -290,11 +295,19 @@ function drawMutationRing(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     p.mutation === 'ogMut' ||
     p.mutation === 'mythicMut' ||
     p.mutation === 'lightning' ||
-    p.mutation === 'superElectric'
+    p.mutation === 'superElectric' ||
+    p.mutation === 'superDooperNeon'
   ) {
     ctx.beginPath()
-    ctx.strokeStyle = withAlpha('#7EE0F0', 0.55)
+    ctx.strokeStyle = withAlpha(p.mutation === 'superDooperNeon' ? '#B8FF4A' : '#7EE0F0', 0.6)
     ctx.arc(0, 0, p.radius * 1.28, -spin, -spin + Math.PI)
+    ctx.stroke()
+  }
+  if (p.mutation === 'superDooperNeon') {
+    ctx.beginPath()
+    ctx.strokeStyle = withAlpha('#7EE0F0', 0.7)
+    ctx.lineWidth = 2.5
+    ctx.arc(0, 0, p.radius * 1.42, spin * 0.7, spin * 0.7 + Math.PI * 1.6)
     ctx.stroke()
   }
 }
@@ -344,6 +357,10 @@ function drawLightningAura(ctx: CanvasRenderingContext2D, p: Prize, time: number
 
 function drawNeonPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
   const strength = mutationStrength(p)
+  if (p.mutation === 'superDooperNeon') {
+    neonGlow(ctx, '#FF6B9A', time, p.wobble + 1, p.radius, 2.2)
+    neonGlow(ctx, '#B8FF4A', time * 1.2, p.wobble, p.radius, 1.8)
+  }
   neonGlow(ctx, p.color, time, p.wobble, p.radius, strength)
   drawMutationRing(ctx, p, time)
   switch (p.kind) {
@@ -381,24 +398,32 @@ function drawNeonPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
       drawNeonKing(ctx, p, time)
       break
   }
-  if (p.mutation === 'superElectric') {
-    // Extra bolt flashes on top of neon art
+  if (p.mutation === 'superElectric' || p.mutation === 'superDooperNeon') {
     const flash = 0.35 + Math.sin(time * 16 + p.wobble) * 0.3
-    ctx.strokeStyle = withAlpha('#B8FF4A', 0.45 + flash * 0.4)
-    ctx.lineWidth = 2.2
+    const dooper = p.mutation === 'superDooperNeon'
+    ctx.strokeStyle = withAlpha(dooper ? '#FF6B9A' : '#B8FF4A', 0.45 + flash * 0.4)
+    ctx.lineWidth = dooper ? 2.8 : 2.2
     ctx.beginPath()
     ctx.moveTo(-p.radius * 0.9, -p.radius * 0.95)
     ctx.lineTo(-p.radius * 0.35, -p.radius * 0.2)
     ctx.lineTo(-p.radius * 0.55, -p.radius * 0.2)
     ctx.lineTo(p.radius * 0.15, p.radius * 0.85)
     ctx.stroke()
-    ctx.strokeStyle = withAlpha('#FFFFFF', 0.35 + flash * 0.25)
+    ctx.strokeStyle = withAlpha(dooper ? '#B8FF4A' : '#FFFFFF', 0.35 + flash * 0.25)
     ctx.beginPath()
     ctx.moveTo(p.radius * 0.75, -p.radius * 0.8)
     ctx.lineTo(p.radius * 0.2, -p.radius * 0.1)
     ctx.lineTo(p.radius * 0.4, -p.radius * 0.1)
     ctx.lineTo(-p.radius * 0.1, p.radius * 0.7)
     ctx.stroke()
+    if (dooper) {
+      ctx.fillStyle = withAlpha('#FFE29A', 0.55 + flash * 0.3)
+      ctx.font = `bold ${Math.floor(p.radius * 0.42)}px Nunito, system-ui`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText('SDN', 0, p.radius * 0.05)
+      ctx.textBaseline = 'alphabetic'
+    }
   }
 }
 

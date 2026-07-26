@@ -61,6 +61,7 @@ export type Mutation =
   | 'ogMut'
   | 'lightning'
   | 'superElectric'
+  | 'superDooperNeon'
 
 export interface NeonBuff {
   playsLeft: number
@@ -426,7 +427,7 @@ export const MACHINES: MachineDef[] = [
     level: 11,
     name: 'Neon Night',
     short: 'L11 NEON',
-    blurb: 'Neon exclusives · mutations · mythic & OG',
+    blurb: 'Super Dooper Neon · mythic & OG mutations',
     cost: 28,
     unlockWins: 42,
     difficulty: 'mythic',

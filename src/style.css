@@ -450,6 +450,13 @@ button.capsule:hover { filter: brightness(1.05); transform: translateY(-1px); }
     0 0 22px rgba(126, 224, 240, 0.55);
   animation: mutPulse 0.85s ease-in-out infinite;
 }
+.mut-superDooperNeon {
+  box-shadow:
+    0 0 0 2px rgba(255, 107, 154, 0.95),
+    0 0 0 5px rgba(184, 255, 74, 0.45),
+    0 0 28px rgba(126, 240, 200, 0.65);
+  animation: mutPulse 0.65s ease-in-out infinite;
+}
 .mut-overcharge {
   box-shadow: 0 0 0 2px rgba(255, 107, 154, 0.75), 0 0 14px rgba(126, 240, 200, 0.3);
 }
