@@ -60,14 +60,16 @@ function bumpRarity(current: Rarity, min: Rarity): Rarity {
   return RARITY_RANK[current] >= RARITY_RANK[min] ? current : min
 }
 
-/** Storm Bay: lightning strikes some tech prizes; a few forge into OG. */
+/** Storm Bay: lightning / Super Electric strikes; a few forge into OG. */
 function rollStormMutation(rarity: Rarity): Mutation {
   const r = Math.random()
-  const ogChance = rarity === 'legend' ? 0.08 : rarity === 'epic' ? 0.055 : 0.04
-  const boltChance = rarity === 'legend' ? 0.28 : rarity === 'epic' ? 0.24 : 0.2
+  const ogChance = rarity === 'legend' ? 0.07 : rarity === 'epic' ? 0.05 : 0.035
+  const superChance = rarity === 'legend' ? 0.12 : rarity === 'epic' ? 0.1 : 0.08
+  const boltChance = rarity === 'legend' ? 0.24 : rarity === 'epic' ? 0.2 : 0.18
 
   if (r < ogChance) return 'ogMut'
-  if (r < ogChance + boltChance) return 'lightning'
+  if (r < ogChance + superChance) return 'superElectric'
+  if (r < ogChance + superChance + boltChance) return 'lightning'
   return 'none'
 }
 
@@ -78,40 +80,45 @@ function rollNeonMutation(rarity: Rarity, neonCabinet: boolean): Mutation {
   const chance = (base: number) => Math.min(0.92, base * boost)
 
   if (rarity === 'og') {
-    if (r < chance(0.45)) return 'ogMut'
-    if (r < chance(0.45) + 0.3) return 'mythicMut'
-    if (r < chance(0.45) + 0.55) return 'overcharge'
+    if (r < chance(0.4)) return 'ogMut'
+    if (r < chance(0.4) + 0.2) return 'superElectric'
+    if (r < chance(0.4) + 0.45) return 'mythicMut'
+    if (r < chance(0.4) + 0.65) return 'overcharge'
     return 'volt'
   }
 
   if (rarity === 'mythic') {
-    if (r < chance(0.12)) return 'ogMut'
-    if (r < chance(0.12) + chance(0.28)) return 'mythicMut'
-    if (r < chance(0.12) + chance(0.28) + 0.25) return 'overcharge'
-    if (r < chance(0.12) + chance(0.28) + 0.5) return 'volt'
+    if (r < chance(0.1)) return 'ogMut'
+    if (r < chance(0.1) + chance(0.1)) return 'superElectric'
+    if (r < chance(0.1) + chance(0.1) + chance(0.24)) return 'mythicMut'
+    if (r < chance(0.1) + chance(0.1) + chance(0.24) + 0.22) return 'overcharge'
+    if (r < chance(0.1) + chance(0.1) + chance(0.24) + 0.45) return 'volt'
     return 'none'
   }
 
   if (rarity === 'legend') {
-    if (r < chance(0.04)) return 'ogMut'
-    if (r < chance(0.04) + chance(0.12)) return 'mythicMut'
-    if (r < chance(0.04) + chance(0.12) + chance(0.18)) return 'overcharge'
-    if (r < chance(0.04) + chance(0.12) + chance(0.18) + 0.22) return 'volt'
+    if (r < chance(0.035)) return 'ogMut'
+    if (r < chance(0.035) + chance(0.06)) return 'superElectric'
+    if (r < chance(0.035) + chance(0.06) + chance(0.11)) return 'mythicMut'
+    if (r < chance(0.035) + chance(0.06) + chance(0.11) + chance(0.16)) return 'overcharge'
+    if (r < chance(0.035) + chance(0.06) + chance(0.11) + chance(0.16) + 0.2) return 'volt'
     return 'none'
   }
 
   if (rarity === 'epic') {
-    if (r < chance(0.02)) return 'ogMut'
-    if (r < chance(0.02) + chance(0.06)) return 'mythicMut'
-    if (r < chance(0.02) + chance(0.06) + chance(0.14)) return 'overcharge'
-    if (r < chance(0.02) + chance(0.06) + chance(0.14) + 0.2) return 'volt'
+    if (r < chance(0.018)) return 'ogMut'
+    if (r < chance(0.018) + chance(0.04)) return 'superElectric'
+    if (r < chance(0.018) + chance(0.04) + chance(0.055)) return 'mythicMut'
+    if (r < chance(0.018) + chance(0.04) + chance(0.055) + chance(0.13)) return 'overcharge'
+    if (r < chance(0.018) + chance(0.04) + chance(0.055) + chance(0.13) + 0.18) return 'volt'
     return 'none'
   }
 
-  if (r < chance(0.005)) return 'ogMut'
-  if (r < chance(0.005) + chance(0.018)) return 'mythicMut'
-  if (r < chance(0.005) + chance(0.018) + chance(0.08)) return 'overcharge'
-  if (r < chance(0.005) + chance(0.018) + chance(0.08) + chance(0.18)) return 'volt'
+  if (r < chance(0.004)) return 'ogMut'
+  if (r < chance(0.004) + chance(0.012)) return 'superElectric'
+  if (r < chance(0.004) + chance(0.012) + chance(0.016)) return 'mythicMut'
+  if (r < chance(0.004) + chance(0.012) + chance(0.016) + chance(0.07)) return 'overcharge'
+  if (r < chance(0.004) + chance(0.012) + chance(0.016) + chance(0.07) + chance(0.16)) return 'volt'
   return 'none'
 }
 
@@ -170,6 +177,18 @@ export function applyMutation(
       accent: '#FFE29A',
       capsule: '#9BB8E0',
       radius: def.radius + 1,
+    }
+  }
+
+  if (mutation === 'superElectric') {
+    return {
+      label: `Super Electric ${def.label}`,
+      value: Math.round(def.value * 7),
+      rarity: 'og',
+      color: '#F7FCFF',
+      accent: '#7EE0F0',
+      capsule: '#B8D4F0',
+      radius: def.radius + 2,
     }
   }
 
@@ -329,6 +348,8 @@ function mutationPayoutMult(mutation: Mutation): number {
   switch (mutation) {
     case 'ogMut':
       return 8
+    case 'superElectric':
+      return 6.5
     case 'mythicMut':
       return 5
     case 'lightning':
@@ -352,6 +373,8 @@ function mutationBuff(mutation: Mutation): NeonBuff | undefined {
       return { playsLeft: 4, hitBoost: 8, swayCut: 4, freePlays: 1, openMult: 1.5 }
     case 'mythicMut':
       return { playsLeft: 6, hitBoost: 12, swayCut: 6, freePlays: 2, openMult: 2 }
+    case 'superElectric':
+      return { playsLeft: 7, hitBoost: 14, swayCut: 8, freePlays: 2, openMult: 2.5 }
     case 'ogMut':
       return { playsLeft: 8, hitBoost: 16, swayCut: 10, freePlays: 3, openMult: 3 }
     default:
@@ -400,16 +423,28 @@ export function openPrizeReward(
     title:
       mutation === 'ogMut'
         ? `OG MUT · ${reward.title}`
-        : mutation === 'mythicMut'
-          ? `MYTHIC MUT · ${reward.title}`
-          : mutation === 'lightning'
-            ? `BOLT · ${reward.title}`
-            : mutation === 'overcharge'
-              ? `X-MUT · ${reward.title}`
-              : mutation === 'volt'
-                ? `VOLT · ${reward.title}`
-                : reward.title,
+        : mutation === 'superElectric'
+          ? `SUPER ELECTRIC · ${reward.title}`
+          : mutation === 'mythicMut'
+            ? `MYTHIC MUT · ${reward.title}`
+            : mutation === 'lightning'
+              ? `BOLT · ${reward.title}`
+              : mutation === 'overcharge'
+                ? `X-MUT · ${reward.title}`
+                : mutation === 'volt'
+                  ? `VOLT · ${reward.title}`
+                  : reward.title,
   })
+
+  if (mutation === 'superElectric') {
+    return withMut({
+      title: 'SUPER ELECTRIC!',
+      detail: `${label} overloaded the chute with pure volt loot`,
+      coins: 20 + Math.floor(Math.random() * 14),
+      score: 50 + Math.floor(Math.random() * 28),
+      sticker: 'Super Electric Seal',
+    })
+  }
 
   if (mutation === 'lightning') {
     return withMut({
@@ -608,6 +643,8 @@ export function mutationLabel(mutation: Mutation): string {
   switch (mutation) {
     case 'ogMut':
       return 'OG MUT'
+    case 'superElectric':
+      return 'SUPER ELEC'
     case 'mythicMut':
       return 'MYTHIC MUT'
     case 'lightning':

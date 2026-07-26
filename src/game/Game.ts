@@ -711,13 +711,15 @@ export class ClawGame {
         ? ` · ${
             prize.mutation === 'ogMut'
               ? 'OG MUT'
-              : prize.mutation === 'mythicMut'
-                ? 'MYTHIC MUT'
-                : prize.mutation === 'lightning'
-                  ? 'BOLT'
-                  : prize.mutation === 'overcharge'
-                    ? 'X-MUT'
-                    : 'VOLT'
+              : prize.mutation === 'superElectric'
+                ? 'SUPER ELEC'
+                : prize.mutation === 'mythicMut'
+                  ? 'MYTHIC MUT'
+                  : prize.mutation === 'lightning'
+                    ? 'BOLT'
+                    : prize.mutation === 'overcharge'
+                      ? 'X-MUT'
+                      : 'VOLT'
           }`
         : ''
     this.lastResult = newlyUnlocked

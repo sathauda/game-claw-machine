@@ -53,7 +53,14 @@ export type PrizeKind =
 export type Rarity = 'common' | 'rare' | 'epic' | 'legend' | 'mythic' | 'og'
 
 /** Prize mutations — neon / storm lightning tiers; top tiers go OP / OG */
-export type Mutation = 'none' | 'volt' | 'overcharge' | 'mythicMut' | 'ogMut' | 'lightning'
+export type Mutation =
+  | 'none'
+  | 'volt'
+  | 'overcharge'
+  | 'mythicMut'
+  | 'ogMut'
+  | 'lightning'
+  | 'superElectric'
 
 export interface NeonBuff {
   playsLeft: number
@@ -450,7 +457,7 @@ export const MACHINES: MachineDef[] = [
     level: 12,
     name: 'Storm Bay',
     short: 'L12 STORM',
-    blurb: 'Lightning mutations · some forge OG',
+    blurb: 'Bolt · Super Electric · Storm OG forge',
     cost: 32,
     unlockWins: 50,
     difficulty: 'nightmare',
