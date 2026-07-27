@@ -67,6 +67,8 @@ export type Mutation =
   | 'superElectric'
   | 'superDooperNeon'
   | 'superOg'
+  | 'shadow'
+  | 'umbra'
 
 export interface NeonBuff {
   playsLeft: number
@@ -515,7 +517,7 @@ export const MACHINES: MachineDef[] = [
     level: 14,
     name: 'Shadow Shelf',
     short: 'L14 SHAD',
-    blurb: 'Dark glass · center or miss',
+    blurb: 'Shade · Umbra · Shadow OG mutations',
     cost: 40,
     unlockWins: 66,
     difficulty: 'nightmare',

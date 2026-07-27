@@ -221,7 +221,7 @@ export function drawPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number)
       break
   }
 
-  // Storm lightning / Super Electric (and forged OG) aura on non-neon prizes
+  // Storm lightning / Super Electric / Shadow auras on non-neon prizes
   if (
     p.mutation &&
     p.mutation !== 'none' &&
@@ -229,6 +229,8 @@ export function drawPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number)
   ) {
     if (p.mutation === 'lightning' || p.mutation === 'superElectric' || p.mutation === 'ogMut' || p.mutation === 'superOg') {
       drawLightningAura(ctx, p, time)
+    } else if (p.mutation === 'shadow' || p.mutation === 'umbra') {
+      drawShadowAura(ctx, p, time)
     } else {
       drawMutationRing(ctx, p, time)
     }
@@ -270,10 +272,14 @@ function mutationStrength(p: Prize): number {
       return 2.8
     case 'ogMut':
       return 2.4
+    case 'umbra':
+      return 2.1
     case 'superElectric':
       return 2.15
     case 'mythicMut':
       return 1.9
+    case 'shadow':
+      return 1.7
     case 'lightning':
       return 1.75
     case 'overcharge':
@@ -296,13 +302,15 @@ function drawMutationRing(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     superElectric: '#7EE0F0',
     superDooperNeon: '#FF6B9A',
     superOg: '#FFE29A',
+    shadow: '#9B8AFF',
+    umbra: '#C9B8FF',
   }
   const c = colors[p.mutation] ?? p.accent
-  const spin = time * (p.mutation === 'superDooperNeon' || p.mutation === 'superOg' ? 6 : 4) + p.wobble
+  const spin = time * (p.mutation === 'superDooperNeon' || p.mutation === 'superOg' || p.mutation === 'umbra' ? 6 : 4) + p.wobble
   const thick =
     p.mutation === 'superOg'
       ? 4.5
-      : p.mutation === 'superDooperNeon'
+      : p.mutation === 'superDooperNeon' || p.mutation === 'umbra'
         ? 4
         : p.mutation === 'ogMut' || p.mutation === 'superElectric'
           ? 3.5
@@ -318,22 +326,62 @@ function drawMutationRing(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     p.mutation === 'lightning' ||
     p.mutation === 'superElectric' ||
     p.mutation === 'superDooperNeon' ||
-    p.mutation === 'superOg'
+    p.mutation === 'superOg' ||
+    p.mutation === 'shadow' ||
+    p.mutation === 'umbra'
   ) {
     ctx.beginPath()
     ctx.strokeStyle = withAlpha(
-      p.mutation === 'superDooperNeon' ? '#B8FF4A' : p.mutation === 'superOg' ? '#FF6B9A' : '#7EE0F0',
+      p.mutation === 'superDooperNeon'
+        ? '#B8FF4A'
+        : p.mutation === 'superOg'
+          ? '#FF6B9A'
+          : p.mutation === 'shadow' || p.mutation === 'umbra'
+            ? '#9B8AFF'
+            : '#7EE0F0',
       0.6,
     )
     ctx.arc(0, 0, p.radius * 1.28, -spin, -spin + Math.PI)
     ctx.stroke()
   }
-  if (p.mutation === 'superDooperNeon' || p.mutation === 'superOg') {
+  if (p.mutation === 'superDooperNeon' || p.mutation === 'superOg' || p.mutation === 'umbra') {
     ctx.beginPath()
-    ctx.strokeStyle = withAlpha(p.mutation === 'superOg' ? '#FFE29A' : '#7EE0F0', 0.7)
+    ctx.strokeStyle = withAlpha(p.mutation === 'umbra' ? '#6A6A78' : p.mutation === 'superOg' ? '#FFE29A' : '#7EE0F0', 0.7)
     ctx.lineWidth = 2.5
     ctx.arc(0, 0, p.radius * 1.42, spin * 0.7, spin * 0.7 + Math.PI * 1.6)
     ctx.stroke()
+  }
+}
+
+function drawShadowAura(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  const isUmbra = p.mutation === 'umbra'
+  const pulse = 0.25 + Math.sin(time * 5 + p.wobble) * 0.12
+  ctx.beginPath()
+  ctx.fillStyle = withAlpha('#121216', isUmbra ? 0.45 + pulse : 0.3 + pulse)
+  ctx.arc(0, 0, p.radius * (isUmbra ? 1.55 : 1.35), 0, Math.PI * 2)
+  ctx.fill()
+  neonGlow(ctx, isUmbra ? '#C9B8FF' : '#9B8AFF', time, p.wobble, p.radius, isUmbra ? 1.9 : 1.5)
+  drawMutationRing(ctx, p, time)
+
+  // wispy shadow streaks
+  ctx.strokeStyle = withAlpha(isUmbra ? '#C9B8FF' : '#6A6A78', 0.4 + pulse)
+  ctx.lineWidth = isUmbra ? 2.2 : 1.6
+  const drift = Math.sin(time * 3 + p.wobble)
+  ctx.beginPath()
+  ctx.moveTo(-p.radius * 0.9, -p.radius * 0.2 + drift * 3)
+  ctx.quadraticCurveTo(-p.radius * 1.2, p.radius * 0.4, -p.radius * 0.5, p.radius * 1.1)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(p.radius * 0.85, -p.radius * 0.3 - drift * 2)
+  ctx.quadraticCurveTo(p.radius * 1.15, p.radius * 0.35, p.radius * 0.4, p.radius * 1.05)
+  ctx.stroke()
+  if (isUmbra) {
+    ctx.fillStyle = withAlpha('#C9B8FF', 0.35 + pulse)
+    ctx.font = `bold ${Math.floor(p.radius * 0.36)}px Nunito, system-ui`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('UMB', 0, 0)
+    ctx.textBaseline = 'alphabetic'
   }
 }
 

@@ -487,6 +487,17 @@ button.capsule:hover { filter: brightness(1.05); transform: translateY(-1px); }
     0 0 30px rgba(255, 210, 100, 0.7);
   animation: mutPulse 0.55s ease-in-out infinite;
 }
+.mut-shadow {
+  box-shadow: 0 0 0 2px rgba(155, 138, 255, 0.75), 0 0 16px rgba(42, 42, 50, 0.55);
+  animation: mutPulse 1.2s ease-in-out infinite;
+}
+.mut-umbra {
+  box-shadow:
+    0 0 0 2px rgba(201, 184, 255, 0.9),
+    0 0 0 4px rgba(42, 42, 50, 0.65),
+    0 0 22px rgba(155, 138, 255, 0.45);
+  animation: mutPulse 0.9s ease-in-out infinite;
+}
 
 @keyframes mutPulse {
   0%, 100% { filter: brightness(1); }

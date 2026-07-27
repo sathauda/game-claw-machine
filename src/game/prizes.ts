@@ -148,8 +148,22 @@ function rollNeonMutation(rarity: Rarity, neonCabinet: boolean): Mutation {
   return 'none'
 }
 
+/** Shadow Shelf: Shade / Umbra cloaks; scarce Shadow OG forges. */
+function rollShadowMutation(rarity: Rarity): Mutation {
+  const r = Math.random()
+  const ogChance = rarity === 'legend' ? 0.06 : rarity === 'epic' ? 0.045 : 0.03
+  const umbraChance = rarity === 'legend' ? 0.14 : rarity === 'epic' ? 0.11 : 0.09
+  const shadeChance = rarity === 'legend' ? 0.26 : rarity === 'epic' ? 0.22 : 0.2
+
+  if (r < ogChance) return 'ogMut'
+  if (r < ogChance + umbraChance) return 'umbra'
+  if (r < ogChance + umbraChance + shadeChance) return 'shadow'
+  return 'none'
+}
+
 export function rollMutation(rarity: Rarity, kind: PrizeKind, machineId?: MachineId): Mutation {
   if (machineId === 'storm') return rollStormMutation(rarity)
+  if (machineId === 'shadow') return rollShadowMutation(rarity)
   if (machineId === 'neon') return rollNeonMutation(rarity, true)
   if (NEON_KINDS.has(kind)) return rollNeonMutation(rarity, false)
   return 'none'
@@ -204,6 +218,30 @@ export function applyMutation(
       accent: '#FFE29A',
       capsule: '#9BB8E0',
       radius: def.radius + 1,
+    }
+  }
+
+  if (mutation === 'shadow') {
+    return {
+      label: `Shade ${def.label}`,
+      value: Math.round(def.value * 3),
+      rarity: bumpRarity(def.rarity, 'mythic'),
+      color: '#2A2A32',
+      accent: '#9B8AFF',
+      capsule: '#4A4A55',
+      radius: def.radius + 1,
+    }
+  }
+
+  if (mutation === 'umbra') {
+    return {
+      label: `Umbra ${def.label}`,
+      value: Math.round(def.value * 6.5),
+      rarity: 'og',
+      color: '#121216',
+      accent: '#C9B8FF',
+      capsule: '#3A3A44',
+      radius: def.radius + 2,
     }
   }
 
@@ -276,6 +314,13 @@ export function createPrizeFromDef(def: PrizeDef, x: number, y: number, machine?
     mutated.color = '#F4F8FF'
     mutated.accent = '#FFE29A'
     mutated.capsule = '#7AA0D4'
+  }
+
+  if (machine?.id === 'shadow' && mutation === 'ogMut') {
+    mutated.label = `Shadow OG ${def.label}`
+    mutated.color = '#1C1C22'
+    mutated.accent = '#C9B8FF'
+    mutated.capsule = '#3A3A44'
   }
 
   if (machine?.id === 'neon' && mutation === 'superDooperNeon') {
@@ -410,10 +455,14 @@ function mutationPayoutMult(mutation: Mutation): number {
       return 12
     case 'ogMut':
       return 8
+    case 'umbra':
+      return 6
     case 'superElectric':
       return 6.5
     case 'mythicMut':
       return 5
+    case 'shadow':
+      return 3.2
     case 'lightning':
       return 3.5
     case 'overcharge':
@@ -429,12 +478,16 @@ function mutationBuff(mutation: Mutation): NeonBuff | undefined {
   switch (mutation) {
     case 'volt':
       return { playsLeft: 3, hitBoost: 5, swayCut: 2, freePlays: 0, openMult: 1.25 }
+    case 'shadow':
+      return { playsLeft: 5, hitBoost: 8, swayCut: 4, freePlays: 1, openMult: 1.55 }
     case 'lightning':
       return { playsLeft: 5, hitBoost: 9, swayCut: 5, freePlays: 1, openMult: 1.6 }
     case 'overcharge':
       return { playsLeft: 4, hitBoost: 8, swayCut: 4, freePlays: 1, openMult: 1.5 }
     case 'mythicMut':
       return { playsLeft: 6, hitBoost: 12, swayCut: 6, freePlays: 2, openMult: 2 }
+    case 'umbra':
+      return { playsLeft: 7, hitBoost: 13, swayCut: 7, freePlays: 2, openMult: 2.4 }
     case 'superElectric':
       return { playsLeft: 7, hitBoost: 14, swayCut: 8, freePlays: 2, openMult: 2.5 }
     case 'ogMut':
@@ -499,11 +552,15 @@ export function openPrizeReward(
                 ? `MYTHIC MUT · ${reward.title}`
                 : mutation === 'lightning'
                   ? `BOLT · ${reward.title}`
-                  : mutation === 'overcharge'
-                    ? `X-MUT · ${reward.title}`
-                    : mutation === 'volt'
-                      ? `VOLT · ${reward.title}`
-                      : reward.title,
+                  : mutation === 'umbra'
+                    ? `UMBRA · ${reward.title}`
+                    : mutation === 'shadow'
+                      ? `SHADE · ${reward.title}`
+                      : mutation === 'overcharge'
+                        ? `X-MUT · ${reward.title}`
+                        : mutation === 'volt'
+                          ? `VOLT · ${reward.title}`
+                          : reward.title,
   })
 
   if (mutation === 'superOg') {
@@ -513,6 +570,26 @@ export function openPrizeReward(
       coins: 55 + Math.floor(Math.random() * 40),
       score: 140 + Math.floor(Math.random() * 60),
       sticker: 'Super OG Crown',
+    })
+  }
+
+  if (mutation === 'umbra') {
+    return withMut({
+      title: 'UMBRA CLOAK!',
+      detail: `${label} slipped out of the dark with heavy loot`,
+      coins: 18 + Math.floor(Math.random() * 12),
+      score: 44 + Math.floor(Math.random() * 22),
+      sticker: 'Umbra Seal',
+    })
+  }
+
+  if (mutation === 'shadow') {
+    return withMut({
+      title: 'SHADE STRIKE!',
+      detail: `${label} bled shadow credits from the shelf`,
+      coins: 11 + Math.floor(Math.random() * 8),
+      score: 26 + Math.floor(Math.random() * 14),
+      sticker: 'Shade Pin',
     })
   }
 
@@ -581,18 +658,23 @@ export function openPrizeReward(
 
   if (kind === 'neonKing' || kind === 'neonOG' || rarity === 'og') {
     const stormOg = label.startsWith('Storm OG')
+    const shadowOg = label.startsWith('Shadow OG')
     return withMut({
-      title: stormOg ? 'STORM OG FORGE!' : 'OG NEON DROP!',
+      title: stormOg ? 'STORM OG FORGE!' : shadowOg ? 'SHADOW OG FORGE!' : 'OG NEON DROP!',
       detail: stormOg
         ? `${label} — lightning forged this into an OG relic`
-        : `${label} — original night-market core unlocked`,
+        : shadowOg
+          ? `${label} — the shelf whispered this into an OG shade`
+          : `${label} — original night-market core unlocked`,
       coins: 28 + Math.floor(Math.random() * 18),
       score: 70 + Math.floor(Math.random() * 40),
       sticker: stormOg
         ? 'Storm OG Seal'
-        : kind === 'neonKing'
-          ? 'OG Neon Crown'
-          : 'OG Neon Seal',
+        : shadowOg
+          ? 'Shadow OG Seal'
+          : kind === 'neonKing'
+            ? 'OG Neon Crown'
+            : 'OG Neon Seal',
     })
   }
 
@@ -770,6 +852,10 @@ export function mutationLabel(mutation: Mutation): string {
       return 'DOOPER'
     case 'ogMut':
       return 'OG MUT'
+    case 'umbra':
+      return 'UMBRA'
+    case 'shadow':
+      return 'SHADE'
     case 'superElectric':
       return 'SUPER ELEC'
     case 'mythicMut':
