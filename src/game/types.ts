@@ -38,6 +38,10 @@ export type PrizeKind =
   | 'trophy'
   | 'rocket'
   | 'crown'
+  | 'crystalShard'
+  | 'crystalPrism'
+  | 'crystalCluster'
+  | 'crystalRelic'
   | 'neonStick'
   | 'neonCat'
   | 'neonSkate'
@@ -218,6 +222,11 @@ export const PRIZE_DEFS: PrizeDef[] = [
   { kind: 'rocket', label: 'Mini Rocket', value: 26, rarity: 'legend', color: '#E85D4C', accent: '#F7E8C8', radius: 23, capsule: '#F07167' },
   { kind: 'crown', label: 'Arcade Crown', value: 28, rarity: 'legend', color: '#FFE29A', accent: '#E8A030', radius: 22, capsule: '#FFD27A' },
   { kind: 'jackpot', label: 'Gold Brick', value: 30, rarity: 'legend', color: '#FFE29A', accent: '#FF8A3D', radius: 18, capsule: '#FFB347' },
+  // Crystal Case exclusives — worth a lot
+  { kind: 'crystalShard', label: 'Crystal Shard', value: 32, rarity: 'legend', color: '#C8F0FF', accent: '#7EE0F0', radius: 18, capsule: '#A8E0F5' },
+  { kind: 'crystalPrism', label: 'Prism Crystal', value: 48, rarity: 'mythic', color: '#E8D0FF', accent: '#B48AFF', radius: 20, capsule: '#D0B8F0' },
+  { kind: 'crystalCluster', label: 'Crystal Cluster', value: 58, rarity: 'mythic', color: '#B8FFE8', accent: '#4FD0C8', radius: 24, capsule: '#90E8D8' },
+  { kind: 'crystalRelic', label: 'Crystal Relic', value: 85, rarity: 'og', color: '#F4F8FF', accent: '#FFE29A', radius: 22, capsule: '#D8EEF5' },
   // Neon Night exclusives
   { kind: 'neonStick', label: 'Volt Stick', value: 8, rarity: 'common', color: '#7EF0C8', accent: '#1AD4A0', radius: 20, capsule: '#5FE0B8' },
   { kind: 'neonCat', label: 'Neon Kitty', value: 12, rarity: 'rare', color: '#7EE0F0', accent: '#FF6B9A', radius: 23, capsule: '#5FD0E0' },
@@ -478,7 +487,7 @@ export const MACHINES: MachineDef[] = [
     level: 13,
     name: 'Crystal Case',
     short: 'L13 CRYS',
-    blurb: 'Premium haul · merciless pocket',
+    blurb: 'High-value crystals · Prism · Relic',
     cost: 36,
     unlockWins: 58,
     difficulty: 'nightmare',
@@ -490,7 +499,16 @@ export const MACHINES: MachineDef[] = [
     body: ['#4A6A78', '#35505C', '#243842'],
     glass: ['#D8EEF5', '#B5D8E4', '#8FBAC8'],
     marquee: '#4A6A78',
-    prizeKinds: ['tablet', 'phone', 'watch', 'jackpot', 'gem', 'crown', 'ring'],
+    prizeKinds: [
+      'gem',
+      'crystalShard',
+      'crystalPrism',
+      'crystalCluster',
+      'crystalRelic',
+      'ring',
+      'crown',
+      'jackpot',
+    ],
   },
   {
     id: 'shadow',

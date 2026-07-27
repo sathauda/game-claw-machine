@@ -546,6 +546,39 @@ export function openPrizeReward(
     })
   }
 
+  if (
+    kind === 'crystalShard' ||
+    kind === 'crystalPrism' ||
+    kind === 'crystalCluster' ||
+    kind === 'crystalRelic'
+  ) {
+    if (kind === 'crystalRelic') {
+      return withMut({
+        title: 'CRYSTAL RELIC!!!',
+        detail: `${label} shattered into a fortune of crystal credits`,
+        coins: 35 + Math.floor(Math.random() * 25),
+        score: 90 + Math.floor(Math.random() * 40),
+        sticker: 'Crystal Relic Seal',
+      })
+    }
+    if (kind === 'crystalCluster' || kind === 'crystalPrism') {
+      return withMut({
+        title: 'CRYSTAL BURST!',
+        detail: `${label} lit the chute with prism loot`,
+        coins: 18 + Math.floor(Math.random() * 14),
+        score: 48 + Math.floor(Math.random() * 24),
+        sticker: kind === 'crystalPrism' ? 'Prism Pin' : 'Cluster Crest',
+      })
+    }
+    return withMut({
+      title: 'Crystal score!',
+      detail: `${label} paid out polished crystal coins`,
+      coins: 12 + Math.floor(Math.random() * 8),
+      score: 28 + Math.floor(Math.random() * 14),
+      sticker: 'Crystal Shard Tag',
+    })
+  }
+
   if (kind === 'neonKing' || kind === 'neonOG' || rarity === 'og') {
     const stormOg = label.startsWith('Storm OG')
     return withMut({

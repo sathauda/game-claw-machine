@@ -185,6 +185,18 @@ export function drawPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     case 'gem':
       drawGem(ctx, p)
       break
+    case 'crystalShard':
+      drawCrystalShard(ctx, p, time)
+      break
+    case 'crystalPrism':
+      drawCrystalPrism(ctx, p, time)
+      break
+    case 'crystalCluster':
+      drawCrystalCluster(ctx, p, time)
+      break
+    case 'crystalRelic':
+      drawCrystalRelic(ctx, p, time)
+      break
     case 'trophy':
       drawTrophy(ctx, p)
       break
@@ -932,6 +944,129 @@ function drawGem(ctx: CanvasRenderingContext2D, p: Prize) {
   ctx.fill()
 }
 
+function drawCrystalShard(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  const r = p.radius
+  const gleam = 0.25 + Math.sin(time * 8 + p.wobble) * 0.15
+  ctx.fillStyle = withAlpha(p.color, 0.35)
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 1.25, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 1.05)
+  ctx.lineTo(r * 0.42, r * 0.15)
+  ctx.lineTo(0, r * 0.95)
+  ctx.lineTo(-r * 0.42, r * 0.15)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = withAlpha('#FFFFFF', gleam + 0.25)
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.85)
+  ctx.lineTo(r * 0.14, r * 0.05)
+  ctx.lineTo(0, r * 0.35)
+  ctx.lineTo(-r * 0.08, 0)
+  ctx.closePath()
+  ctx.fill()
+  ctx.strokeStyle = p.accent
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+}
+
+function drawCrystalPrism(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  const r = p.radius
+  const spin = time * 2 + p.wobble
+  ctx.fillStyle = withAlpha(p.accent, 0.3)
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 1.3, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.95)
+  ctx.lineTo(r * 0.75, -r * 0.1)
+  ctx.lineTo(r * 0.45, r * 0.85)
+  ctx.lineTo(-r * 0.45, r * 0.85)
+  ctx.lineTo(-r * 0.75, -r * 0.1)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = withAlpha('#FFFFFF', 0.4 + Math.sin(spin) * 0.15)
+  ctx.beginPath()
+  ctx.moveTo(-r * 0.1, -r * 0.55)
+  ctx.lineTo(r * 0.35, -r * 0.05)
+  ctx.lineTo(r * 0.15, r * 0.45)
+  ctx.lineTo(-r * 0.25, r * 0.1)
+  ctx.closePath()
+  ctx.fill()
+  ctx.strokeStyle = p.accent
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.95)
+  ctx.lineTo(0, r * 0.85)
+  ctx.stroke()
+}
+
+function drawCrystalCluster(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  const r = p.radius
+  const bob = Math.sin(time * 6 + p.wobble) * 1.5
+  const spikes: [number, number, number][] = [
+    [-r * 0.45, bob, 0.7],
+    [0, -bob * 0.5, 1],
+    [r * 0.42, bob * 0.8, 0.75],
+  ]
+  ctx.fillStyle = withAlpha(p.accent, 0.28)
+  ctx.beginPath()
+  ctx.arc(0, 4, r * 1.15, 0, Math.PI * 2)
+  ctx.fill()
+  for (const [ox, oy, s] of spikes) {
+    const h = r * s
+    ctx.fillStyle = p.color
+    ctx.beginPath()
+    ctx.moveTo(ox, oy - h)
+    ctx.lineTo(ox + h * 0.35, oy + h * 0.55)
+    ctx.lineTo(ox - h * 0.35, oy + h * 0.55)
+    ctx.closePath()
+    ctx.fill()
+    ctx.fillStyle = withAlpha('#FFFFFF', 0.35)
+    ctx.beginPath()
+    ctx.moveTo(ox, oy - h * 0.8)
+    ctx.lineTo(ox + h * 0.12, oy + h * 0.1)
+    ctx.lineTo(ox - h * 0.05, oy + h * 0.15)
+    ctx.closePath()
+    ctx.fill()
+  }
+}
+
+function drawCrystalRelic(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
+  const r = p.radius
+  const pulse = 0.4 + Math.sin(time * 5 + p.wobble) * 0.2
+  ctx.fillStyle = withAlpha(p.accent, pulse * 0.55)
+  ctx.beginPath()
+  ctx.arc(0, 0, r * 1.4, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.fillStyle = p.color
+  ctx.beginPath()
+  ctx.moveTo(0, -r)
+  ctx.lineTo(r * 0.85, -r * 0.15)
+  ctx.lineTo(r * 0.55, r * 0.9)
+  ctx.lineTo(-r * 0.55, r * 0.9)
+  ctx.lineTo(-r * 0.85, -r * 0.15)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = p.accent
+  ctx.beginPath()
+  ctx.moveTo(0, -r * 0.35)
+  ctx.lineTo(r * 0.35, r * 0.1)
+  ctx.lineTo(0, r * 0.5)
+  ctx.lineTo(-r * 0.35, r * 0.1)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = '#1A2A32'
+  ctx.font = `bold ${Math.floor(r * 0.4)}px Nunito, system-ui`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('CR', 0, r * 0.08)
+  ctx.textBaseline = 'alphabetic'
+}
+
 function drawTrophy(ctx: CanvasRenderingContext2D, p: Prize) {
   const r = p.radius
   ctx.fillStyle = p.color
@@ -1431,6 +1566,10 @@ export function prizeIcon(kind: PrizeKind): string {
     ring: 'RING',
     sneakers: 'KICKS',
     gem: 'GEM',
+    crystalShard: 'SHARD',
+    crystalPrism: 'PRISM',
+    crystalCluster: 'CLUSTER',
+    crystalRelic: 'RELIC',
     trophy: 'CUP',
     rocket: 'ROCKET',
     crown: 'CROWN',
