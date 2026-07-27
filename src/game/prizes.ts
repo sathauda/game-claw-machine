@@ -234,14 +234,15 @@ export function applyMutation(
   }
 
   if (mutation === 'umbra') {
+    // Secret: looks like a normal prize until opened
     return {
-      label: `Umbra ${def.label}`,
+      label: def.label,
       value: Math.round(def.value * 6.5),
       rarity: 'og',
-      color: '#121216',
-      accent: '#C9B8FF',
-      capsule: '#3A3A44',
-      radius: def.radius + 2,
+      color: def.color,
+      accent: def.accent,
+      capsule: def.capsule,
+      radius: def.radius,
     }
   }
 
@@ -553,7 +554,7 @@ export function openPrizeReward(
                 : mutation === 'lightning'
                   ? `BOLT · ${reward.title}`
                   : mutation === 'umbra'
-                    ? `UMBRA · ${reward.title}`
+                    ? `SECRET UMBRA · ${reward.title}`
                     : mutation === 'shadow'
                       ? `SHADE · ${reward.title}`
                       : mutation === 'overcharge'
@@ -575,11 +576,11 @@ export function openPrizeReward(
 
   if (mutation === 'umbra') {
     return withMut({
-      title: 'UMBRA CLOAK!',
-      detail: `${label} slipped out of the dark with heavy loot`,
+      title: 'SECRET UMBRA!',
+      detail: `${label} was cloaked in Umbra the whole time — hidden fortune unlocked`,
       coins: 18 + Math.floor(Math.random() * 12),
       score: 44 + Math.floor(Math.random() * 22),
-      sticker: 'Umbra Seal',
+      sticker: 'Secret Umbra Seal',
     })
   }
 
@@ -869,6 +870,16 @@ export function mutationLabel(mutation: Mutation): string {
     default:
       return ''
   }
+}
+
+export function isSecretMutation(mutation: Mutation | undefined): boolean {
+  return mutation === 'umbra'
+}
+
+/** Labels shown on sealed bag capsules — secrets stay hidden. */
+export function sealedMutationLabel(mutation: Mutation): string {
+  if (isSecretMutation(mutation)) return ''
+  return mutationLabel(mutation)
 }
 
 export function isNeonKind(kind: PrizeKind): boolean {

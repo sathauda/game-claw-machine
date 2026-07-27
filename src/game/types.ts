@@ -517,7 +517,7 @@ export const MACHINES: MachineDef[] = [
     level: 14,
     name: 'Shadow Shelf',
     short: 'L14 SHAD',
-    blurb: 'Shade · Umbra · Shadow OG mutations',
+    blurb: 'Shade · secret cloaks · Shadow OG',
     cost: 40,
     unlockWins: 66,
     difficulty: 'nightmare',

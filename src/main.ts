@@ -1,6 +1,6 @@
 import './style.css'
 import { ClawGame } from './game/Game'
-import { mutationLabel, rarityLabel } from './game/prizes'
+import { isSecretMutation, mutationLabel, rarityLabel, sealedMutationLabel } from './game/prizes'
 import { prizeIcon } from './game/render'
 import type { BagPrize, MachineDef, MachineId, OpenReward } from './game/types'
 
@@ -193,12 +193,14 @@ function renderBag(bag: BagPrize[], stickers: string[], sealedCount: number) {
   } else {
     bagGrid.innerHTML = bag
       .map((item) => {
-        const rare = rarityLabel(item.rarity)
-        const mut = item.mutation && item.mutation !== 'none' ? mutationLabel(item.mutation) : ''
-        const mutClass = mut ? ` mut-${item.mutation}` : ''
+        const secret = item.sealed && isSecretMutation(item.mutation)
+        const rare = secret ? '???' : rarityLabel(item.rarity)
+        const mut = item.mutation && item.mutation !== 'none' ? sealedMutationLabel(item.mutation) : ''
+        const mutClass =
+          secret ? ' mut-secret' : mut ? ` mut-${item.mutation}` : ''
         if (item.sealed) {
           return `
-            <button type="button" class="capsule sealed rarity-${item.rarity}${mutClass}" data-open="${item.id}" style="--cap:${item.capsule}">
+            <button type="button" class="capsule sealed rarity-${secret ? 'secret' : item.rarity}${mutClass}" data-open="${item.id}" style="--cap:${item.capsule}">
               <span class="cap-shine"></span>
               <span class="cap-icon">${prizeIcon(item.kind)}</span>
               <span class="cap-name">${item.label}</span>
@@ -208,11 +210,13 @@ function renderBag(bag: BagPrize[], stickers: string[], sealedCount: number) {
           `
         }
         const loot = item.openedReward
+        const revealed =
+          item.mutation === 'umbra' ? ` mut-umbra` : item.mutation && item.mutation !== 'none' ? ` mut-${item.mutation}` : ''
         return `
-          <div class="capsule opened rarity-${item.rarity}${mutClass}" style="--cap:${item.capsule}">
+          <div class="capsule opened rarity-${item.rarity}${revealed}" style="--cap:${item.capsule}">
             <span class="cap-icon">${prizeIcon(item.kind)}</span>
             <span class="cap-name">${item.label}</span>
-            <span class="cap-rare">OPENED</span>
+            <span class="cap-rare">${item.mutation === 'umbra' ? 'UMBRA!' : 'OPENED'}</span>
             <span class="cap-cta">${loot ? `+${loot.coins}c` : 'done'}</span>
           </div>
         `

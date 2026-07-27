@@ -355,17 +355,25 @@ function drawMutationRing(ctx: CanvasRenderingContext2D, p: Prize, time: number)
 
 function drawShadowAura(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
   const isUmbra = p.mutation === 'umbra'
+  // Umbra stays nearly invisible in the cabinet — secret until opened
+  if (isUmbra) {
+    const hush = 0.08 + Math.sin(time * 2.2 + p.wobble) * 0.04
+    ctx.beginPath()
+    ctx.fillStyle = withAlpha('#121216', hush)
+    ctx.arc(0, 0, p.radius * 1.12, 0, Math.PI * 2)
+    ctx.fill()
+    return
+  }
   const pulse = 0.25 + Math.sin(time * 5 + p.wobble) * 0.12
   ctx.beginPath()
-  ctx.fillStyle = withAlpha('#121216', isUmbra ? 0.45 + pulse : 0.3 + pulse)
-  ctx.arc(0, 0, p.radius * (isUmbra ? 1.55 : 1.35), 0, Math.PI * 2)
+  ctx.fillStyle = withAlpha('#121216', 0.3 + pulse)
+  ctx.arc(0, 0, p.radius * 1.35, 0, Math.PI * 2)
   ctx.fill()
-  neonGlow(ctx, isUmbra ? '#C9B8FF' : '#9B8AFF', time, p.wobble, p.radius, isUmbra ? 1.9 : 1.5)
+  neonGlow(ctx, '#9B8AFF', time, p.wobble, p.radius, 1.5)
   drawMutationRing(ctx, p, time)
 
-  // wispy shadow streaks
-  ctx.strokeStyle = withAlpha(isUmbra ? '#C9B8FF' : '#6A6A78', 0.4 + pulse)
-  ctx.lineWidth = isUmbra ? 2.2 : 1.6
+  ctx.strokeStyle = withAlpha('#6A6A78', 0.4 + pulse)
+  ctx.lineWidth = 1.6
   const drift = Math.sin(time * 3 + p.wobble)
   ctx.beginPath()
   ctx.moveTo(-p.radius * 0.9, -p.radius * 0.2 + drift * 3)
@@ -375,14 +383,6 @@ function drawShadowAura(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
   ctx.moveTo(p.radius * 0.85, -p.radius * 0.3 - drift * 2)
   ctx.quadraticCurveTo(p.radius * 1.15, p.radius * 0.35, p.radius * 0.4, p.radius * 1.05)
   ctx.stroke()
-  if (isUmbra) {
-    ctx.fillStyle = withAlpha('#C9B8FF', 0.35 + pulse)
-    ctx.font = `bold ${Math.floor(p.radius * 0.36)}px Nunito, system-ui`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText('UMB', 0, 0)
-    ctx.textBaseline = 'alphabetic'
-  }
 }
 
 function drawLightningAura(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
