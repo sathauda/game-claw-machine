@@ -62,6 +62,7 @@ export type Mutation =
   | 'lightning'
   | 'superElectric'
   | 'superDooperNeon'
+  | 'superOg'
 
 export interface NeonBuff {
   playsLeft: number

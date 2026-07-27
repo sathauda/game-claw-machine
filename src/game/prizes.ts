@@ -60,8 +60,29 @@ function bumpRarity(current: Rarity, min: Rarity): Rarity {
   return RARITY_RANK[current] >= RARITY_RANK[min] ? current : min
 }
 
-/** Storm Bay: lightning / Super Electric strikes; a few forge into OG. */
+/** Neon Night exclusive: Super Dooper Neon — only in the neon cabinet. */
+function rollSuperDooperNeon(rarity: Rarity): boolean {
+  const r = Math.random()
+  if (rarity === 'og') return r < 0.28
+  if (rarity === 'mythic') return r < 0.12
+  if (rarity === 'legend') return r < 0.06
+  if (rarity === 'epic') return r < 0.035
+  return r < 0.018
+}
+
+/** Scarce Super OG forge — now and then on neon / storm. */
+function rollSuperOg(rarity: Rarity, neonCabinet: boolean): boolean {
+  const r = Math.random()
+  const boost = neonCabinet ? 1.4 : 1
+  if (rarity === 'og') return r < 0.12 * boost
+  if (rarity === 'mythic') return r < 0.04 * boost
+  if (rarity === 'legend') return r < 0.02 * boost
+  return r < 0.008 * boost
+}
+
+/** Storm Bay: lightning / Super Electric strikes; a few forge into OG / Super OG. */
 function rollStormMutation(rarity: Rarity): Mutation {
+  if (rollSuperOg(rarity, false)) return 'superOg'
   const r = Math.random()
   const ogChance = rarity === 'legend' ? 0.07 : rarity === 'epic' ? 0.05 : 0.035
   const superChance = rarity === 'legend' ? 0.12 : rarity === 'epic' ? 0.1 : 0.08
@@ -73,20 +94,12 @@ function rollStormMutation(rarity: Rarity): Mutation {
   return 'none'
 }
 
-/** Neon Night exclusive: Super Dooper Neon — only in the neon cabinet. */
-function rollSuperDooperNeon(rarity: Rarity): boolean {
-  const r = Math.random()
-  if (rarity === 'og') return r < 0.28
-  if (rarity === 'mythic') return r < 0.12
-  if (rarity === 'legend') return r < 0.06
-  if (rarity === 'epic') return r < 0.035
-  return r < 0.018
-}
-
 /** Neon Night / neon kinds: volt ladder. Neon cabinets mutate more often. */
 function rollNeonMutation(rarity: Rarity, neonCabinet: boolean): Mutation {
   // Super Dooper Neon only inside Neon Night
   if (neonCabinet && rollSuperDooperNeon(rarity)) return 'superDooperNeon'
+  // Super OG now and then (higher chance in Neon Night)
+  if (rollSuperOg(rarity, neonCabinet)) return 'superOg'
 
   const boost = neonCabinet ? 1.75 : 1
   const r = Math.random()
@@ -215,6 +228,18 @@ export function applyMutation(
       accent: '#FF6B9A',
       capsule: '#B8FF4A',
       radius: def.radius + 4,
+    }
+  }
+
+  if (mutation === 'superOg') {
+    return {
+      label: `Super OG ${def.label}`,
+      value: Math.round(def.value * 20),
+      rarity: 'og',
+      color: '#FFE29A',
+      accent: '#FF6B9A',
+      capsule: '#FFD27A',
+      radius: def.radius + 5,
     }
   }
 
@@ -379,6 +404,8 @@ export function probeGrab(
 
 function mutationPayoutMult(mutation: Mutation): number {
   switch (mutation) {
+    case 'superOg':
+      return 16
     case 'superDooperNeon':
       return 12
     case 'ogMut':
@@ -414,6 +441,8 @@ function mutationBuff(mutation: Mutation): NeonBuff | undefined {
       return { playsLeft: 8, hitBoost: 16, swayCut: 10, freePlays: 3, openMult: 3 }
     case 'superDooperNeon':
       return { playsLeft: 10, hitBoost: 20, swayCut: 12, freePlays: 4, openMult: 4 }
+    case 'superOg':
+      return { playsLeft: 12, hitBoost: 24, swayCut: 14, freePlays: 5, openMult: 5 }
     default:
       return undefined
   }
@@ -458,22 +487,34 @@ export function openPrizeReward(
         ? `${reward.detail} · ${mutationLabel(mutation)} MUTATION ONLINE`
         : reward.detail,
     title:
-      mutation === 'superDooperNeon'
-        ? `SUPER DOOPER NEON · ${reward.title}`
-        : mutation === 'ogMut'
-          ? `OG MUT · ${reward.title}`
-          : mutation === 'superElectric'
-            ? `SUPER ELECTRIC · ${reward.title}`
-            : mutation === 'mythicMut'
-              ? `MYTHIC MUT · ${reward.title}`
-              : mutation === 'lightning'
-                ? `BOLT · ${reward.title}`
-                : mutation === 'overcharge'
-                  ? `X-MUT · ${reward.title}`
-                  : mutation === 'volt'
-                    ? `VOLT · ${reward.title}`
-                    : reward.title,
+      mutation === 'superOg'
+        ? `SUPER OG · ${reward.title}`
+        : mutation === 'superDooperNeon'
+          ? `SUPER DOOPER NEON · ${reward.title}`
+          : mutation === 'ogMut'
+            ? `OG MUT · ${reward.title}`
+            : mutation === 'superElectric'
+              ? `SUPER ELECTRIC · ${reward.title}`
+              : mutation === 'mythicMut'
+                ? `MYTHIC MUT · ${reward.title}`
+                : mutation === 'lightning'
+                  ? `BOLT · ${reward.title}`
+                  : mutation === 'overcharge'
+                    ? `X-MUT · ${reward.title}`
+                    : mutation === 'volt'
+                      ? `VOLT · ${reward.title}`
+                      : reward.title,
   })
+
+  if (mutation === 'superOg') {
+    return withMut({
+      title: 'SUPER OG DROP!!!',
+      detail: `${label} — the ultimate original night-market haul`,
+      coins: 55 + Math.floor(Math.random() * 40),
+      score: 140 + Math.floor(Math.random() * 60),
+      sticker: 'Super OG Crown',
+    })
+  }
 
   if (mutation === 'superDooperNeon') {
     return withMut({
@@ -690,6 +731,8 @@ export function rarityLabel(rarity: Rarity): string {
 
 export function mutationLabel(mutation: Mutation): string {
   switch (mutation) {
+    case 'superOg':
+      return 'SUPER OG'
     case 'superDooperNeon':
       return 'DOOPER'
     case 'ogMut':

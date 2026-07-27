@@ -215,7 +215,7 @@ export function drawPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     p.mutation !== 'none' &&
     !p.kind.startsWith('neon')
   ) {
-    if (p.mutation === 'lightning' || p.mutation === 'superElectric' || p.mutation === 'ogMut') {
+    if (p.mutation === 'lightning' || p.mutation === 'superElectric' || p.mutation === 'ogMut' || p.mutation === 'superOg') {
       drawLightningAura(ctx, p, time)
     } else {
       drawMutationRing(ctx, p, time)
@@ -252,6 +252,8 @@ function neonGlow(
 
 function mutationStrength(p: Prize): number {
   switch (p.mutation) {
+    case 'superOg':
+      return 3.0
     case 'superDooperNeon':
       return 2.8
     case 'ogMut':
@@ -281,11 +283,18 @@ function drawMutationRing(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     lightning: '#E8F4FF',
     superElectric: '#7EE0F0',
     superDooperNeon: '#FF6B9A',
+    superOg: '#FFE29A',
   }
   const c = colors[p.mutation] ?? p.accent
-  const spin = time * (p.mutation === 'superDooperNeon' ? 6 : 4) + p.wobble
+  const spin = time * (p.mutation === 'superDooperNeon' || p.mutation === 'superOg' ? 6 : 4) + p.wobble
   const thick =
-    p.mutation === 'superDooperNeon' ? 4 : p.mutation === 'ogMut' || p.mutation === 'superElectric' ? 3.5 : 2.5
+    p.mutation === 'superOg'
+      ? 4.5
+      : p.mutation === 'superDooperNeon'
+        ? 4
+        : p.mutation === 'ogMut' || p.mutation === 'superElectric'
+          ? 3.5
+          : 2.5
   ctx.strokeStyle = withAlpha(c, 0.8)
   ctx.lineWidth = thick
   ctx.beginPath()
@@ -296,16 +305,20 @@ function drawMutationRing(ctx: CanvasRenderingContext2D, p: Prize, time: number)
     p.mutation === 'mythicMut' ||
     p.mutation === 'lightning' ||
     p.mutation === 'superElectric' ||
-    p.mutation === 'superDooperNeon'
+    p.mutation === 'superDooperNeon' ||
+    p.mutation === 'superOg'
   ) {
     ctx.beginPath()
-    ctx.strokeStyle = withAlpha(p.mutation === 'superDooperNeon' ? '#B8FF4A' : '#7EE0F0', 0.6)
+    ctx.strokeStyle = withAlpha(
+      p.mutation === 'superDooperNeon' ? '#B8FF4A' : p.mutation === 'superOg' ? '#FF6B9A' : '#7EE0F0',
+      0.6,
+    )
     ctx.arc(0, 0, p.radius * 1.28, -spin, -spin + Math.PI)
     ctx.stroke()
   }
-  if (p.mutation === 'superDooperNeon') {
+  if (p.mutation === 'superDooperNeon' || p.mutation === 'superOg') {
     ctx.beginPath()
-    ctx.strokeStyle = withAlpha('#7EE0F0', 0.7)
+    ctx.strokeStyle = withAlpha(p.mutation === 'superOg' ? '#FFE29A' : '#7EE0F0', 0.7)
     ctx.lineWidth = 2.5
     ctx.arc(0, 0, p.radius * 1.42, spin * 0.7, spin * 0.7 + Math.PI * 1.6)
     ctx.stroke()
@@ -315,20 +328,21 @@ function drawMutationRing(ctx: CanvasRenderingContext2D, p: Prize, time: number)
 function drawLightningAura(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
   const flash = 0.35 + Math.sin(time * 14 + p.wobble) * 0.25
   const isSuper = p.mutation === 'superElectric'
-  const isOg = p.mutation === 'ogMut'
+  const isOg = p.mutation === 'ogMut' || p.mutation === 'superOg'
+  const isSuperOg = p.mutation === 'superOg'
   neonGlow(
     ctx,
-    isSuper ? '#7EE0F0' : '#9BB8E0',
+    isSuperOg ? '#FFE29A' : isSuper ? '#7EE0F0' : '#9BB8E0',
     time,
     p.wobble,
     p.radius,
-    isOg ? 2.1 : isSuper ? 2.0 : 1.6,
+    isSuperOg ? 2.5 : isOg ? 2.1 : isSuper ? 2.0 : 1.6,
   )
   drawMutationRing(ctx, p, time)
 
-  const boltColor = isOg ? '#FFE29A' : isSuper ? '#B8FF4A' : '#E8F4FF'
+  const boltColor = isSuperOg ? '#FF6B9A' : isOg ? '#FFE29A' : isSuper ? '#B8FF4A' : '#E8F4FF'
   ctx.strokeStyle = withAlpha(boltColor, 0.55 + flash * 0.4)
-  ctx.lineWidth = isOg || isSuper ? 2.4 : 1.8
+  ctx.lineWidth = isOg || isSuper || isSuperOg ? 2.4 : 1.8
   ctx.lineJoin = 'round'
 
   const drawBolt = (x0: number, y0: number, scale: number, flip: number) => {
@@ -348,7 +362,7 @@ function drawLightningAura(ctx: CanvasRenderingContext2D, p: Prize, time: number
   if ((isOg || isSuper) && pulse > 0.15) {
     drawBolt(0, -p.radius * 1.05, 1.1, 1)
   }
-  if (isSuper && pulse > 0.4) {
+  if ((isSuper || isSuperOg) && pulse > 0.4) {
     drawBolt(-p.radius * 0.2, -p.radius * 1.15, 1.25, -1)
     ctx.strokeStyle = withAlpha('#FFFFFF', 0.35 + flash * 0.3)
     drawBolt(p.radius * 0.35, -p.radius * 0.95, 0.95, 1)
@@ -357,9 +371,9 @@ function drawLightningAura(ctx: CanvasRenderingContext2D, p: Prize, time: number
 
 function drawNeonPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
   const strength = mutationStrength(p)
-  if (p.mutation === 'superDooperNeon') {
-    neonGlow(ctx, '#FF6B9A', time, p.wobble + 1, p.radius, 2.2)
-    neonGlow(ctx, '#B8FF4A', time * 1.2, p.wobble, p.radius, 1.8)
+  if (p.mutation === 'superDooperNeon' || p.mutation === 'superOg') {
+    neonGlow(ctx, p.mutation === 'superOg' ? '#FFE29A' : '#FF6B9A', time, p.wobble + 1, p.radius, 2.2)
+    neonGlow(ctx, p.mutation === 'superOg' ? '#FF6B9A' : '#B8FF4A', time * 1.2, p.wobble, p.radius, 1.8)
   }
   neonGlow(ctx, p.color, time, p.wobble, p.radius, strength)
   drawMutationRing(ctx, p, time)
@@ -398,30 +412,31 @@ function drawNeonPrize(ctx: CanvasRenderingContext2D, p: Prize, time: number) {
       drawNeonKing(ctx, p, time)
       break
   }
-  if (p.mutation === 'superElectric' || p.mutation === 'superDooperNeon') {
+  if (p.mutation === 'superElectric' || p.mutation === 'superDooperNeon' || p.mutation === 'superOg') {
     const flash = 0.35 + Math.sin(time * 16 + p.wobble) * 0.3
     const dooper = p.mutation === 'superDooperNeon'
-    ctx.strokeStyle = withAlpha(dooper ? '#FF6B9A' : '#B8FF4A', 0.45 + flash * 0.4)
-    ctx.lineWidth = dooper ? 2.8 : 2.2
+    const superOg = p.mutation === 'superOg'
+    ctx.strokeStyle = withAlpha(superOg ? '#FFE29A' : dooper ? '#FF6B9A' : '#B8FF4A', 0.45 + flash * 0.4)
+    ctx.lineWidth = superOg || dooper ? 2.8 : 2.2
     ctx.beginPath()
     ctx.moveTo(-p.radius * 0.9, -p.radius * 0.95)
     ctx.lineTo(-p.radius * 0.35, -p.radius * 0.2)
     ctx.lineTo(-p.radius * 0.55, -p.radius * 0.2)
     ctx.lineTo(p.radius * 0.15, p.radius * 0.85)
     ctx.stroke()
-    ctx.strokeStyle = withAlpha(dooper ? '#B8FF4A' : '#FFFFFF', 0.35 + flash * 0.25)
+    ctx.strokeStyle = withAlpha(superOg ? '#FF6B9A' : dooper ? '#B8FF4A' : '#FFFFFF', 0.35 + flash * 0.25)
     ctx.beginPath()
     ctx.moveTo(p.radius * 0.75, -p.radius * 0.8)
     ctx.lineTo(p.radius * 0.2, -p.radius * 0.1)
     ctx.lineTo(p.radius * 0.4, -p.radius * 0.1)
     ctx.lineTo(-p.radius * 0.1, p.radius * 0.7)
     ctx.stroke()
-    if (dooper) {
-      ctx.fillStyle = withAlpha('#FFE29A', 0.55 + flash * 0.3)
-      ctx.font = `bold ${Math.floor(p.radius * 0.42)}px Nunito, system-ui`
+    if (dooper || superOg) {
+      ctx.fillStyle = withAlpha(superOg ? '#FFE29A' : '#FFE29A', 0.55 + flash * 0.3)
+      ctx.font = `bold ${Math.floor(p.radius * 0.38)}px Nunito, system-ui`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText('SDN', 0, p.radius * 0.05)
+      ctx.fillText(superOg ? 'S-OG' : 'SDN', 0, p.radius * 0.05)
       ctx.textBaseline = 'alphabetic'
     }
   }

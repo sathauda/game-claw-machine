@@ -28,6 +28,7 @@ app.innerHTML = `
       <div class="top-actions">
         <button type="button" class="btn btn-tiny btn-credits" id="btn-credits">DAILY +10</button>
         <button type="button" class="btn btn-tiny btn-og" id="btn-og">OG PRIZE</button>
+        <button type="button" class="btn btn-tiny btn-super-og" id="btn-super-og">SUPER OG</button>
         <button type="button" class="btn btn-tiny" id="btn-bag-toggle">BAG</button>
       </div>
     </header>
@@ -110,6 +111,7 @@ const bagToggle = document.querySelector<HTMLButtonElement>('#btn-bag-toggle')!
 const bagClose = document.querySelector<HTMLButtonElement>('#btn-bag-close')!
 const creditsBtn = document.querySelector<HTMLButtonElement>('#btn-credits')!
 const ogPrizeBtn = document.querySelector<HTMLButtonElement>('#btn-og')!
+const superOgBtn = document.querySelector<HTMLButtonElement>('#btn-super-og')!
 const cabinetFrame = document.querySelector<HTMLElement>('.cabinet-frame')!
 
 function fitCanvas() {
@@ -255,6 +257,17 @@ function syncUi() {
     : state.ogPrizeDaysLeft === 1
       ? 'OG prize ready tomorrow'
       : `OG prize ready in ${state.ogPrizeDaysLeft} days`
+  superOgBtn.disabled = !state.canClaimSuperOg
+  superOgBtn.textContent = state.canClaimSuperOg
+    ? 'SUPER OG'
+    : state.superOgDaysLeft === 1
+      ? 'S-OG TOMORROW'
+      : `S-OG ${state.superOgDaysLeft}D`
+  superOgBtn.title = state.canClaimSuperOg
+    ? `Claim a Super OG prize now (then every ${state.superOgCooldownDays} days)`
+    : state.superOgDaysLeft === 1
+      ? 'Super OG ready tomorrow'
+      : `Super OG ready in ${state.superOgDaysLeft} days`
   statCoins.textContent = String(state.coins)
   statScore.textContent = String(state.score)
   statBest.textContent = String(state.highScore)
@@ -304,6 +317,10 @@ bagClose.addEventListener('click', () => bagDrawer.classList.remove('open'))
 creditsBtn.addEventListener('click', () => game.claimDailyCredits())
 ogPrizeBtn.addEventListener('click', () => {
   const prize = game.claimOgPrize()
+  if (prize) bagDrawer.classList.add('open')
+})
+superOgBtn.addEventListener('click', () => {
+  const prize = game.claimSuperOgPrize()
   if (prize) bagDrawer.classList.add('open')
 })
 

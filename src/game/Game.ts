@@ -38,6 +38,7 @@ const SAVE_KEY = 'lucky-claw-save-v6'
 const START_COINS = 60
 const CREDIT_PACK = 10
 const OG_PRIZE_COOLDOWN_DAYS = 2
+const SUPER_OG_COOLDOWN_DAYS = 3
 
 interface SaveData {
   coins: number
@@ -51,6 +52,8 @@ interface SaveData {
   lastDailyCreditDay?: string
   /** Local calendar day when the bi-daily OG prize was last claimed */
   lastOgPrizeDay?: string
+  /** Local calendar day when Super OG was last claimed (undefined = claimable now) */
+  lastSuperOgDay?: string
   buff?: NeonBuff
 }
 
@@ -99,6 +102,7 @@ function loadSave(): SaveData {
       machineId: unlocked,
       lastDailyCreditDay: typeof data.lastDailyCreditDay === 'string' ? data.lastDailyCreditDay : undefined,
       lastOgPrizeDay: typeof data.lastOgPrizeDay === 'string' ? data.lastOgPrizeDay : undefined,
+      lastSuperOgDay: typeof data.lastSuperOgDay === 'string' ? data.lastSuperOgDay : undefined,
       buff: data.buff ? { ...emptyBuff(), ...data.buff } : emptyBuff(),
     }
   } catch {
@@ -117,6 +121,7 @@ function defaultSave(): SaveData {
     machineId: 'toybox',
     lastDailyCreditDay: undefined,
     lastOgPrizeDay: undefined,
+    lastSuperOgDay: undefined,
     buff: emptyBuff(),
   }
 }
@@ -144,6 +149,7 @@ export class ClawGame {
   private wins: number
   private lastDailyCreditDay: string | undefined
   private lastOgPrizeDay: string | undefined
+  private lastSuperOgDay: string | undefined
   private buff: NeonBuff = emptyBuff()
   private streak = 0
   private message = 'Pick a machine · aim tight · keep what you hit'
@@ -176,6 +182,7 @@ export class ClawGame {
     this.wins = save.wins
     this.lastDailyCreditDay = save.lastDailyCreditDay
     this.lastOgPrizeDay = save.lastOgPrizeDay
+    this.lastSuperOgDay = save.lastSuperOgDay
     this.buff = save.buff ? { ...emptyBuff(), ...save.buff } : emptyBuff()
     this.machine = getMachine(save.machineId)
     this.prizes = createPrizePile(this.machine, 11)
@@ -192,6 +199,16 @@ export class ClawGame {
     return { canClaim: daysLeft === 0, daysLeft, today }
   }
 
+  private superOgStatus() {
+    const today = todayKey()
+    if (!this.lastSuperOgDay) {
+      return { canClaim: true, daysLeft: 0, today }
+    }
+    const elapsed = calendarDaysBetween(this.lastSuperOgDay, today)
+    const daysLeft = Math.max(0, SUPER_OG_COOLDOWN_DAYS - elapsed)
+    return { canClaim: daysLeft === 0, daysLeft, today }
+  }
+
   setStateListener(cb: () => void) {
     this.onState = cb
   }
@@ -202,6 +219,7 @@ export class ClawGame {
     const unlockedIds = MACHINES.filter((m) => this.wins >= m.unlockWins).map((m) => m.id)
     const nextLock = MACHINES.find((m) => this.wins < m.unlockWins)
     const ogStatus = this.ogPrizeStatus()
+    const superOgStatus = this.superOgStatus()
     return {
       phase: this.phase,
       coins: this.coins,
@@ -227,6 +245,9 @@ export class ClawGame {
       canClaimOgPrize: ogStatus.canClaim,
       ogPrizeDaysLeft: ogStatus.daysLeft,
       ogPrizeCooldownDays: OG_PRIZE_COOLDOWN_DAYS,
+      canClaimSuperOg: superOgStatus.canClaim,
+      superOgDaysLeft: superOgStatus.daysLeft,
+      superOgCooldownDays: SUPER_OG_COOLDOWN_DAYS,
       buff: this.buff,
       canPlay:
         (this.coins >= cost || this.buff.freePlays > 0) &&
@@ -366,6 +387,43 @@ export class ClawGame {
     return bagItem
   }
 
+  /** Claim a sealed Super OG prize now (first time), then every 3 days. */
+  claimSuperOgPrize(): BagPrize | null {
+    const status = this.superOgStatus()
+    if (!status.canClaim) {
+      this.message =
+        status.daysLeft === 1
+          ? 'Super OG ready tomorrow — check back then'
+          : `Super OG on cooldown — ${status.daysLeft} days left`
+      this.notify()
+      return null
+    }
+
+    const kind: PrizeKind = Math.random() < 0.45 ? 'neonKing' : 'neonOG'
+    const def = getPrizeDef(kind)
+    const mutated = applyMutation(def, 'superOg')
+    const bagItem: BagPrize = {
+      id: `super-og-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      kind,
+      label: mutated.label.startsWith('Super OG')
+        ? mutated.label
+        : `Super OG ${def.label}`,
+      rarity: 'og',
+      color: mutated.color,
+      accent: mutated.accent,
+      capsule: mutated.capsule,
+      value: mutated.value,
+      sealed: true,
+      mutation: 'superOg',
+    }
+    this.bag.unshift(bagItem)
+    this.lastSuperOgDay = status.today
+    this.message = `${bagItem.label} sealed — SUPER OG ready to open!`
+    this.persist()
+    this.notify()
+    return bagItem
+  }
+
   /** @deprecated use claimDailyCredits — kept for older hooks */
   addCredits(_amount = CREDIT_PACK) {
     return this.claimDailyCredits()
@@ -476,6 +534,7 @@ export class ClawGame {
       machineId: this.machine.id,
       lastDailyCreditDay: this.lastDailyCreditDay,
       lastOgPrizeDay: this.lastOgPrizeDay,
+      lastSuperOgDay: this.lastSuperOgDay,
       buff: this.buff,
     }
     localStorage.setItem(SAVE_KEY, JSON.stringify(data))
@@ -711,17 +770,19 @@ export class ClawGame {
         ? ` · ${
             prize.mutation === 'superDooperNeon'
               ? 'DOOPER'
-              : prize.mutation === 'ogMut'
-                ? 'OG MUT'
-                : prize.mutation === 'superElectric'
-                  ? 'SUPER ELEC'
-                  : prize.mutation === 'mythicMut'
-                    ? 'MYTHIC MUT'
-                    : prize.mutation === 'lightning'
-                      ? 'BOLT'
-                      : prize.mutation === 'overcharge'
-                        ? 'X-MUT'
-                        : 'VOLT'
+              : prize.mutation === 'superOg'
+                ? 'SUPER OG'
+                : prize.mutation === 'ogMut'
+                  ? 'OG MUT'
+                  : prize.mutation === 'superElectric'
+                    ? 'SUPER ELEC'
+                    : prize.mutation === 'mythicMut'
+                      ? 'MYTHIC MUT'
+                      : prize.mutation === 'lightning'
+                        ? 'BOLT'
+                        : prize.mutation === 'overcharge'
+                          ? 'X-MUT'
+                          : 'VOLT'
           }`
         : ''
     this.lastResult = newlyUnlocked
